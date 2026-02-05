@@ -57,6 +57,47 @@ router.post("/create-user", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+//stream io
+router.post("/create-or-get-user", async (req, res) => {
+  try {
+    const { clerkId, email, firstName, lastName, nickName, image } = req.body;
+
+    if (!email || !firstName) {
+      return res.status(400).json({ message: "Missing email or firstName" });
+    }
+
+    // --- Find or create local user ---
+    let user = await User.findOne({ email });
+    if (!user) {
+      const id = clerkId || `user_${Date.now()}`;
+      user = new User({
+        clerkId: id,
+        email,
+        firstName,
+        lastName: lastName || "",
+        nickName: nickName || "",
+        image: image || "",
+      });
+      await user.save();
+    }
+
+    // --- Upsert user in Stream ---
+    await chatServer.upsertUser({
+      id: user.clerkId,
+      name: user.firstName,
+      image: image || undefined,
+    });
+
+    // --- Generate tokens ---
+    const chatToken = chatServer.createToken(user.clerkId);
+    const videoToken = await createVideoToken(user.clerkId);
+
+    res.json({ user, chatToken, videoToken });
+  } catch (err) {
+    console.error("Error in create-or-get-user:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
 
 
 
