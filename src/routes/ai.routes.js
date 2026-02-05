@@ -1,31 +1,15 @@
 const express = require("express");
 const router = express.Router();
 
-
-// POST WEBHOOK FROM STREAM
 router.post("/ai-reply", async (req, res) => {
   try {
-    const body = req.body;
-    const type = body.type;
-    const message = body.message;
-    const channel_id = body.channel?.id || body.channel_id;
+    const { messages } = req.body;
 
-    console.log("Incoming webhook:", type);
-
-    // Ignore non-new messages
-    if (type !== "message.new") {
-      return res.json({ received: true });
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: "Invalid messages format" });
     }
 
-    // Prevent AI replying to itself
-    if (message?.user?.id === "ai-assistant") {
-      return res.json({ ignored: true });
-    }
-
-    // ---------------------------
-    // 1️⃣ CALL CLOUDFLARE AI
-    // ---------------------------
-    console.log("Calling Cloudflare AI...");
+    console.log("AI CHAT REQUEST:", messages[messages.length - 1]);
 
     const cfResponse = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
@@ -36,40 +20,26 @@ router.post("/ai-reply", async (req, res) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          messages: [
-            { role: "system", content: "You are a helpful AI assistant." },
-            { role: "user", content: message.text },
-          ],
+          messages: messages.map((m) => ({
+            role: m.role === "ai" ? "assistant" : "user",
+            content: m.text,
+          })),
         }),
       }
     );
 
     const result = await cfResponse.json();
-    console.log("CF RAW RESPONSE:", result);
 
-    const aiResponse =
-      result?.result?.response || "Hello! How can I help you?";
+    console.log("CF RESPONSE:", result);
 
-    // ---------------------------
-    // 2️⃣ SEND MESSAGE TO STREAM
-    // ---------------------------
-    console.log("Sending AI message to channel:", channel_id);
+    const reply =
+      result?.result?.response ||
+      "Sorry, I couldn't generate a response.";
 
-    const channel = client.channel("messaging", channel_id, {
-      created_by_id: "ai-assistant",
-    });
-
-    await channel.watch();
-
-    await channel.sendMessage({
-      text: aiResponse,
-      user_id: "ai-assistant",
-    });
-
-    return res.json({ success: true, reply: aiResponse });
+    return res.json({ reply });
   } catch (error) {
-    console.error("AI reply error:", error);
-    return res.status(500).json({ error: error.message });
+    console.error("AI CHAT ERROR:", error);
+    return res.status(500).json({ error: "AI failed" });
   }
 });
 
