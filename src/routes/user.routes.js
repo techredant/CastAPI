@@ -227,41 +227,41 @@ router.get("/:clerkId", async (req, res) => {
 // });
 
 
-// // ------------------- GET ALL USERS -------------------
-// router.get("/", async (req, res) => {
-//   try {
-//     const { clerkId } = req.query; // 👈 current logged-in user's Clerk ID (optional)
+// ------------------- GET ALL USERS -------------------
+router.get("/", async (req, res) => {
+  try {
+    const { clerkId } = req.query; // 👈 current logged-in user's Clerk ID (optional)
 
-//     const users = await User.find();
+    const users = await User.find();
 
-//     // If no logged-in user provided, return all users
-//     if (!clerkId) {
-//       return res.json(users);
-//     }
+    // If no logged-in user provided, return all users
+    if (!clerkId) {
+      return res.json(users);
+    }
 
-//     // Get the current user for following info
-//     const currentUser = await User.findOne({ clerkId });
+    // Get the current user for following info
+    const currentUser = await User.findOne({ clerkId });
 
-//     const data = users.map((u) => ({
-//       _id: u._id,
-//       clerkId: u.clerkId,
-//       firstName: u.firstName,
-//       lastName: u.lastName,
-//       nickName: u.nickName,
-//       image: u.image,
-//       county: u.county,
-//       constituency: u.constituency,
-//       ward: u.ward,
-//       followers: u.followers,
-//       following: u.following,
-//       isFollowing: currentUser?.following?.includes(u.clerkId) || false,
-//     }));
+    const data = users.map((u) => ({
+      _id: u._id,
+      clerkId: u.clerkId,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      nickName: u.nickName,
+      image: u.image,
+      county: u.county,
+      constituency: u.constituency,
+      ward: u.ward,
+      followers: u.followers,
+      following: u.following,
+      isFollowing: currentUser?.following?.includes(u.clerkId) || false,
+    }));
 
-//     res.json(data);
-//   } catch (err) {
-//     console.error("Error fetching users:", err);
-//     res.status(500).json({ error: "Server error fetching users" });
-//   }
-// });
+    res.json(data);
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).json({ error: "Server error fetching users" });
+  }
+});
 
 module.exports = router;
