@@ -82,22 +82,22 @@ router.post("/update-location", async (req, res) => {
   }
 });
 
-// // ------------------- GET USER BY CLERKID -------------------
-// router.get("/:clerkId", async (req, res) => {
-//   try {
-//     const { clerkId } = req.params;
-//     const user = await User.findOne({ clerkId });
+// ------------------- GET USER BY CLERKID -------------------
+router.get("/:clerkId", async (req, res) => {
+  try {
+    const { clerkId } = req.params;
+    const user = await User.findOne({ clerkId });
 
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-//     res.json(user);
-//   } catch (err) {
-//     console.error("Error fetching user:", err);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// });
+    res.json(user);
+  } catch (err) {
+    console.error("Error fetching user:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // // ------------------- UPDATE USER IMAGE -------------------
 // router.post("/update-image", async (req, res) => {
