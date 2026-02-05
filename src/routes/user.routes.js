@@ -1,9 +1,22 @@
 // routes/user.routes.js
+require("dotenv").config();
 const express = require("express");
 const User = require("../models/user");
-require("dotenv").config();
+
+const { StreamChat } = require("stream-chat");
+
+
 
 const router = express.Router();
+
+const chatServer = StreamChat.getInstance(
+  process.env.STREAM_CHAT_KEY,
+  process.env.STREAM_CHAT_SECRET
+);
+
+// const STREAM_VIDEO_API = "https://video.stream-io-api.com/video/v1";
+// const STREAM_VIDEO_KEY = process.env.STREAM_VIDEO_KEY;
+// const STREAM_VIDEO_SECRET = process.env.STREAM_VIDEO_SECRET;
 
 
 // ------------------- CREATE OR UPDATE USER -------------------
