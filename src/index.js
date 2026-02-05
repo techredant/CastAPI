@@ -43,10 +43,13 @@ io.on("connection", (socket) => {
 
 const userRoutes = require("./routes/user.routes");
 const postRoutes = require("./routes/post.routes")(io);
+const productRoutes = require("./routes/product.routes");
 
 
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/products", productRoutes);
+
 
 const PORT = 3000;
 
