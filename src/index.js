@@ -2,7 +2,6 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
-// const userRoutes = require("./routes/user.routes");
 
 
 const app = express();
@@ -14,7 +13,10 @@ app.get("/", (req, res) => {
   res.status(200).json({ message: "Success" });
 });
 
-// app.use("/api/users", userRoutes);
+const userRoutes = require("./routes/user.routes");
+
+
+app.use("/api/users", userRoutes);
 
 const PORT = 3000;
 
