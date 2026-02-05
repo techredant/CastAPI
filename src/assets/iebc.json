@@ -1,0 +1,1373 @@
+{
+  "counties": [
+    {
+      "name": "Narok",
+      "countyCode": 33,
+      "constituencies": [
+        {
+          "name": "Narok North",
+          "code": 3301,
+          "wards": [
+            { "name": "Olokurto", "code": 330101 },
+            { "name": "Olposimoru", "code": 330102 },
+            { "name": "Melili", "code": 330103 },
+            { "name": "Narok Town", "code": 330104 },
+            { "name": "Nkareta", "code": 330105 }
+          ]
+        },
+        {
+          "name": "Narok South",
+          "code": 3302,
+          "wards": [
+            { "name": "Melelo", "code": 330201 },
+            { "name": "Loita", "code": 330202 },
+            { "name": "Maji Moto/Naroosura", "code": 330203 },
+            { "name": "Sagamian", "code": 330204 },
+            { "name": "Ololulung'a", "code": 330205 }
+          ]
+        },
+        {
+          "name": "Narok East",
+          "code": 3303,
+          "wards": [
+            { "name": "Suswa", "code": 330301 },
+            { "name": "Emurua Dikir", "code": 330302 },
+            { "name": "Keekonyokie", "code": 330303 },
+            { "name": "Mosiro", "code": 330304 }
+          ]
+        },
+        {
+          "name": "Narok West",
+          "code": 3304,
+          "wards": [
+            { "name": "Mara", "code": 330401 },
+            { "name": "Siana", "code": 330402 },
+            { "name": "Ilmotiok", "code": 330403 },
+            { "name": "Naikarra", "code": 330404 }
+          ]
+        },
+        {
+          "name": "Emurua Dikirr",
+          "code": 3305,
+          "wards": [
+            { "name": "Ololmasani", "code": 330501 },
+            { "name": "Ilkerin", "code": 330502 },
+            { "name": "Olchorro", "code": 330503 },
+            { "name": "Masian", "code": 330504 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bomet",
+      "countyCode": 35,
+      "constituencies": [
+        {
+          "name": "Bomet Central",
+          "code": 3501,
+          "wards": [
+            { "name": "Silibwet", "code": 350101 },
+            { "name": "Cheboin", "code": 350102 },
+            { "name": "Kapletundo", "code": 350103 },
+            { "name": "Singorwet", "code": 350104 }
+          ]
+        },
+        {
+          "name": "Bomet East",
+          "code": 3502,
+          "wards": [
+            { "name": "Merigi", "code": 350201 },
+            { "name": "Kembu", "code": 350202 },
+            { "name": "Longisa", "code": 350203 },
+            { "name": "Kimulot", "code": 350204 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kericho",
+      "countyCode": 36,
+      "constituencies": [
+        {
+          "name": "Kipkelion East",
+          "code": 3601,
+          "wards": [
+            { "name": "Kimugul", "code": 360101 },
+            { "name": "Sorget", "code": 360102 },
+            { "name": "Chepseon", "code": 360103 },
+            { "name": "Kamasian", "code": 360104 },
+            { "name": "Chilchila", "code": 360105 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nairobi",
+      "countyCode": 47,
+      "constituencies": [
+        {
+          "name": "Westlands",
+          "code": 4701,
+          "wards": [
+            { "name": "Kitisuru", "code": 470101 },
+            { "name": "Parklands/Highridge", "code": 470102 },
+            { "name": "Karura", "code": 470103 },
+            { "name": "Kangemi", "code": 470104 },
+            { "name": "Mountain View", "code": 470105 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kwale",
+      "countyCode": 2,
+      "constituencies": [
+        {
+          "name": "Msambweni",
+          "code": 7,
+          "wards": [
+            { "name": "Gombato/Bongwe", "code": 31 },
+            { "name": "Ukunda", "code": 32 },
+            { "name": "Kinondo", "code": 33 },
+            { "name": "Ramisi", "code": 34 }
+          ]
+        },
+        {
+          "name": "Lunga Lunga",
+          "code": 8,
+          "wards": [
+            { "name": "Pongwe/Kikoneni", "code": 35 },
+            { "name": "Dzombo", "code": 36 },
+            { "name": "Mwereni", "code": 37 },
+            { "name": "Vanga", "code": 38 }
+          ]
+        },
+        {
+          "name": "Matuga",
+          "code": 9,
+          "wards": [
+            { "name": "Tsimba/Golini", "code": 39 },
+            { "name": "Waa", "code": 40 },
+            { "name": "Tiwi", "code": 41 },
+            { "name": "Kubo South", "code": 42 },
+            { "name": "Mkongani", "code": 43 }
+          ]
+        },
+        {
+          "name": "Kinango",
+          "code": 10,
+          "wards": [
+            { "name": "Ndavaya", "code": 44 },
+            { "name": "Puma", "code": 45 },
+            { "name": "Kinango", "code": 46 },
+            { "name": "Mackinnon Road", "code": 47 },
+            { "name": "Chengoni/Samburu", "code": 48 },
+            { "name": "Mwavumbo", "code": 49 },
+            { "name": "Kasemeni", "code": 50 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Mombasa",
+      "countyCode": 1,
+      "constituencies": [
+        {
+          "name": "Changamwe",
+          "code": 1,
+          "wards": [
+            { "name": "Port Reitz", "code": 1 },
+            { "name": "Kipevu", "code": 2 },
+            { "name": "Airport", "code": 3 },
+            { "name": "Changamwe", "code": 4 },
+            { "name": "Chaani", "code": 5 }
+          ]
+        },
+        {
+          "name": "Jomvu",
+          "code": 2,
+          "wards": [
+            { "name": "Jomvu Kuu", "code": 6 },
+            { "name": "Miritini", "code": 7 },
+            { "name": "Mikindani", "code": 8 }
+          ]
+        },
+        {
+          "name": "Kisauni",
+          "code": 3,
+          "wards": [
+            { "name": "Mjambere", "code": 9 },
+            { "name": "Junda", "code": 10 },
+            { "name": "Bamburi", "code": 11 },
+            { "name": "Mwakirunge", "code": 12 },
+            { "name": "Mtopanga", "code": 13 },
+            { "name": "Magogoni", "code": 14 },
+            { "name": "Shanzu", "code": 15 }
+          ]
+        },
+        {
+          "name": "Nyali",
+          "code": 4,
+          "wards": [
+            { "name": "Frere Town", "code": 16 },
+            { "name": "Ziwa la Ng'ombe", "code": 17 },
+            { "name": "Mkomani", "code": 18 },
+            { "name": "Kongowea", "code": 19 },
+            { "name": "Kadzandani", "code": 20 }
+          ]
+        },
+        {
+          "name": "Likoni",
+          "code": 5,
+          "wards": [
+            { "name": "Mtongwe", "code": 21 },
+            { "name": "Shika Adabu", "code": 22 },
+            { "name": "Bofu", "code": 23 },
+            { "name": "Likoni", "code": 24 },
+            { "name": "Timbwani", "code": 25 }
+          ]
+        },
+        {
+          "name": "Mvita",
+          "code": 6,
+          "wards": [
+            { "name": "Mji wa Kale/Makadara", "code": 26 },
+            { "name": "Tudor", "code": 27 },
+            { "name": "Tononoka", "code": 28 },
+            { "name": "Shimanzi/Ganjoni", "code": 29 },
+            { "name": "Majengo", "code": 30 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kilifi",
+      "countyCode": 3,
+      "constituencies": [
+        {
+          "name": "Kilifi North",
+          "code": 11,
+          "wards": [
+            { "name": "Tezo", "code": 51 },
+            { "name": "Sokoni", "code": 52 },
+            { "name": "Kibarani", "code": 53 },
+            { "name": "Dabaso", "code": 54 },
+            { "name": "Matsangoni", "code": 55 },
+            { "name": "Watamu", "code": 56 },
+            { "name": "Mnarani", "code": 57 }
+          ]
+        },
+        {
+          "name": "Kilifi South",
+          "code": 12,
+          "wards": [
+            { "name": "Junju", "code": 58 },
+            { "name": "Mwarakaya", "code": 59 },
+            { "name": "Shimo la Tewa", "code": 60 },
+            { "name": "Chasimba", "code": 61 },
+            { "name": "Mtepeni", "code": 62 }
+          ]
+        },
+        {
+          "name": "Kaloleni",
+          "code": 13,
+          "wards": [
+            { "name": "Mariakani", "code": 63 },
+            { "name": "Kayafungo", "code": 64 },
+            { "name": "Kaloleni", "code": 65 },
+            { "name": "Mwanamwinga", "code": 66 }
+          ]
+        },
+        {
+          "name": "Ganze",
+          "code": 14,
+          "wards": [
+            { "name": "Bamba", "code": 67 },
+            { "name": "Jaribuni", "code": 68 },
+            { "name": "Sokoke", "code": 69 },
+            { "name": "Ganze", "code": 70 }
+          ]
+        },
+        {
+          "name": "Malindi",
+          "code": 15,
+          "wards": [
+            { "name": "Jilore", "code": 71 },
+            { "name": "Kakuyuni", "code": 72 },
+            { "name": "Ganda", "code": 73 },
+            { "name": "Malindi Town", "code": 74 },
+            { "name": "Shella", "code": 75 }
+          ]
+        },
+        {
+          "name": "Magarini",
+          "code": 16,
+          "wards": [
+            { "name": "Marafa", "code": 76 },
+            { "name": "Magarini", "code": 77 },
+            { "name": "Gongoni", "code": 78 },
+            { "name": "Adu", "code": 79 },
+            { "name": "Garashi", "code": 80 },
+            { "name": "Sabaki", "code": 81 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tana River",
+      "countyCode": 4,
+      "constituencies": [
+        {
+          "name": "Garsen",
+          "code": 17,
+          "wards": [
+            { "name": "Garsen Central", "code": 82 },
+            { "name": "Garsen East", "code": 83 },
+            { "name": "Garsen North", "code": 84 },
+            { "name": "Garsen South", "code": 85 },
+            { "name": "Garsen West", "code": 86 }
+          ]
+        },
+        {
+          "name": "Galole",
+          "code": 18,
+          "wards": [
+            { "name": "Chewani", "code": 87 },
+            { "name": "Wayu", "code": 88 },
+            { "name": "Mikinduni", "code": 89 },
+            { "name": "Kinakomba", "code": 90 }
+          ]
+        },
+        {
+          "name": "Bura",
+          "code": 19,
+          "wards": [
+            { "name": "Chewele", "code": 91 },
+            { "name": "Hirimani", "code": 92 },
+            { "name": "Bangale", "code": 93 },
+            { "name": "Sala", "code": 94 },
+            { "name": "Madogo", "code": 95 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Lamu",
+      "countyCode": 5,
+      "constituencies": [
+        {
+          "name": "Lamu East",
+          "code": 20,
+          "wards": [
+            { "name": "Faza", "code": 96 },
+            { "name": "Kiunga", "code": 97 },
+            { "name": "Basuba", "code": 98 }
+          ]
+        },
+        {
+          "name": "Lamu West",
+          "code": 21,
+          "wards": [
+            { "name": "Mkomani", "code": 99 },
+            { "name": "Shella", "code": 100 },
+            { "name": "Hindi", "code": 101 },
+            { "name": "Mkunumbi", "code": 102 },
+            { "name": "Hongwe", "code": 103 },
+            { "name": "Witu", "code": 104 },
+            { "name": "Bahari", "code": 105 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Taita Taveta",
+      "countyCode": 6,
+      "constituencies": [
+        {
+          "name": "Taveta",
+          "code": 22,
+          "wards": [
+            { "name": "Chala", "code": 106 },
+            { "name": "Mahoo", "code": 107 },
+            { "name": "Bomani", "code": 108 },
+            { "name": "Mboghoni", "code": 109 }
+          ]
+        },
+        {
+          "name": "Wundanyi",
+          "code": 23,
+          "wards": [
+            { "name": "Wundanyi/Mbale", "code": 110 },
+            { "name": "Werugha", "code": 111 },
+            { "name": "Wumingu/Kishushe", "code": 112 },
+            { "name": "Mwanda/Mgange", "code": 113 }
+          ]
+        },
+        {
+          "name": "Mwatate",
+          "code": 24,
+          "wards": [
+            { "name": "Ronge", "code": 114 },
+            { "name": "Bura", "code": 115 },
+            { "name": "Chawia", "code": 116 },
+            { "name": "Mwatate", "code": 117 }
+          ]
+        },
+        {
+          "name": "Voi",
+          "code": 25,
+          "wards": [
+            { "name": "Kaloleni", "code": 118 },
+            { "name": "Marungu", "code": 119 },
+            { "name": "Sagalla", "code": 120 },
+            { "name": "Kasigau", "code": 121 },
+            { "name": "Mbololo", "code": 122 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Garissa",
+      "countyCode": 7,
+      "constituencies": [
+        {
+          "name": "Garissa Township",
+          "code": 26,
+          "wards": [
+            { "name": "Galbet", "code": 123 },
+            { "name": "Waberi", "code": 124 },
+            { "name": "Township", "code": 125 },
+            { "name": "Iftin", "code": 126 }
+          ]
+        },
+        {
+          "name": "Balambala",
+          "code": 27,
+          "wards": [
+            { "name": "Balambala", "code": 127 },
+            { "name": "Danyere", "code": 128 },
+            { "name": "Jarajara", "code": 129 },
+            { "name": "Saka", "code": 130 }
+          ]
+        },
+        {
+          "name": "Lagdera",
+          "code": 28,
+          "wards": [
+            { "name": "Modogashe", "code": 131 },
+            { "name": "Benane", "code": 132 },
+            { "name": "Goreale", "code": 133 },
+            { "name": "Maalimin", "code": 134 }
+          ]
+        },
+        {
+          "name": "Dadaab",
+          "code": 29,
+          "wards": [
+            { "name": "Dertu", "code": 135 },
+            { "name": "Dadaab", "code": 136 },
+            { "name": "Labasigale", "code": 137 },
+            { "name": "Damajale", "code": 138 }
+          ]
+        },
+        {
+          "name": "Fafi",
+          "code": 30,
+          "wards": [
+            { "name": "Nanighi", "code": 139 },
+            { "name": "Bura", "code": 140 },
+            { "name": "Dekaharia", "code": 141 },
+            { "name": "Jarajila", "code": 142 }
+          ]
+        },
+        {
+          "name": "Ijara",
+          "code": 31,
+          "wards": [
+            { "name": "Hulugho", "code": 143 },
+            { "name": "Sangailu", "code": 144 },
+            { "name": "Ijara", "code": 145 },
+            { "name": "Masalani", "code": 146 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Wajir",
+      "countyCode": 8,
+      "constituencies": [
+        {
+          "name": "Wajir East",
+          "code": 32,
+          "wards": [
+            { "name": "Wagberi", "code": 147 },
+            { "name": "Barwako", "code": 148 },
+            { "name": "Township", "code": 149 },
+            { "name": "Khorof Harar", "code": 150 }
+          ]
+        },
+        {
+          "name": "Wajir West",
+          "code": 33,
+          "wards": [
+            { "name": "Arbajahan", "code": 151 },
+            { "name": "Hadado", "code": 152 },
+            { "name": "Ademasajide", "code": 153 }
+          ]
+        },
+        {
+          "name": "Tarbaj",
+          "code": 34,
+          "wards": [
+            { "name": "Tarbaj", "code": 154 },
+            { "name": "Elben", "code": 155 },
+            { "name": "Sarman", "code": 156 },
+            { "name": "Wargadud", "code": 157 }
+          ]
+        },
+        {
+          "name": "Wajir North",
+          "code": 35,
+          "wards": [
+            { "name": "Bute", "code": 158 },
+            { "name": "Korondille", "code": 159 },
+            { "name": "Danaba", "code": 160 },
+            { "name": "Gurar", "code": 161 }
+          ]
+        },
+        {
+          "name": "Wajir South",
+          "code": 36,
+          "wards": [
+            { "name": "Benane", "code": 162 },
+            { "name": "Dadaja Bulla", "code": 163 },
+            { "name": "Burder", "code": 164 },
+            { "name": "Lagboghol South", "code": 165 }
+          ]
+        },
+        {
+          "name": "Eldas",
+          "code": 37,
+          "wards": [
+            { "name": "Della", "code": 166 },
+            { "name": "Eldas", "code": 167 },
+            { "name": "Lakoley South/Basir", "code": 168 },
+            { "name": "Elnur/Tula Tula", "code": 169 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Mandera",
+      "countyCode": 9,
+      "constituencies": [
+        {
+          "name": "Mandera West",
+          "code": 38,
+          "wards": [
+            { "name": "Takaba South", "code": 170 },
+            { "name": "Takaba", "code": 171 },
+            { "name": "Lagsure", "code": 172 },
+            { "name": "Dandu", "code": 173 },
+            { "name": "Gither", "code": 174 }
+          ]
+        },
+        {
+          "name": "Banisa",
+          "code": 39,
+          "wards": [
+            { "name": "Banisa", "code": 175 },
+            { "name": "Derkhale", "code": 176 },
+            { "name": "Guba", "code": 177 },
+            { "name": "Malkamari", "code": 178 }
+          ]
+        },
+        {
+          "name": "Mandera North",
+          "code": 40,
+          "wards": [
+            { "name": "Rhamu", "code": 179 },
+            { "name": "Rhamu Dimtu", "code": 180 },
+            { "name": "Ashabito", "code": 181 },
+            { "name": "Guticha", "code": 182 }
+          ]
+        },
+        {
+          "name": "Mandera South",
+          "code": 41,
+          "wards": [
+            { "name": "Wargadud", "code": 183 },
+            { "name": "Elwak South", "code": 184 },
+            { "name": "Elwak North", "code": 185 },
+            { "name": "Kutulo", "code": 186 }
+          ]
+        },
+        {
+          "name": "Mandera East",
+          "code": 42,
+          "wards": [
+            { "name": "Neboi", "code": 187 },
+            { "name": "Township", "code": 188 },
+            { "name": "Khalalio", "code": 189 },
+            { "name": "Libehia", "code": 190 }
+          ]
+        },
+        {
+          "name": "Lafey",
+          "code": 43,
+          "wards": [
+            { "name": "Sala", "code": 191 },
+            { "name": "Fino", "code": 192 },
+            { "name": "Lafey", "code": 193 },
+            { "name": "Warankara", "code": 194 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Marsabit",
+      "countyCode": 10,
+      "constituencies": [
+        {
+          "name": "Moyale",
+          "code": 44,
+          "wards": [
+            { "name": "Butiye", "code": 195 },
+            { "name": "Sololo", "code": 196 },
+            { "name": "Uran", "code": 197 },
+            { "name": "Heilu/Manyatta", "code": 198 }
+          ]
+        },
+        {
+          "name": "North Horr",
+          "code": 45,
+          "wards": [
+            { "name": "North Horr", "code": 199 },
+            { "name": "Illeret", "code": 200 },
+            { "name": "Dukana", "code": 201 },
+            { "name": "Maikona", "code": 202 }
+          ]
+        },
+        {
+          "name": "Laisamis",
+          "code": 46,
+          "wards": [
+            { "name": "Laisamis", "code": 203 },
+            { "name": "Kargi/South Horr", "code": 204 },
+            { "name": "Loiyangalani", "code": 205 },
+            { "name": "Korr/Ngurunit", "code": 206 }
+          ]
+        },
+        {
+          "name": "Saku",
+          "code": 47,
+          "wards": [
+            { "name": "Sagante/Jaldesa", "code": 207 },
+            { "name": "Karare", "code": 208 },
+            { "name": "Marsabit Central", "code": 209 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Isiolo",
+      "countyCode": 11,
+      "constituencies": [
+        {
+          "name": "Isiolo North",
+          "code": 48,
+          "wards": [
+            { "name": "Wabera", "code": 210 },
+            { "name": "Bulla Pesa", "code": 211 },
+            { "name": "Ngare Mara", "code": 212 },
+            { "name": "Burat", "code": 213 },
+            { "name": "Oldonyiro", "code": 214 }
+          ]
+        },
+        {
+          "name": "Isiolo South",
+          "code": 49,
+          "wards": [
+            { "name": "Garbatulla", "code": 215 },
+            { "name": "Kinna", "code": 216 },
+            { "name": "Sericho", "code": 217 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Meru",
+      "countyCode": 12,
+      "constituencies": [
+        {
+          "name": "Igembe South",
+          "code": 50,
+          "wards": [
+            { "name": "Igembe Central", "code": 218 },
+            { "name": "Igembe South", "code": 219 },
+            { "name": "Athiru Gaiti", "code": 220 }
+          ]
+        },
+        {
+          "name": "Igembe North",
+          "code": 51,
+          "wards": [
+            { "name": "Ntunene", "code": 221 },
+            { "name": "Antubetwe Kiongo", "code": 222 },
+            { "name": "Antuambui", "code": 223 }
+          ]
+        },
+        {
+          "name": "Tigania West",
+          "code": 52,
+          "wards": [
+            { "name": "Mikinduri", "code": 224 },
+            { "name": "Kianjai", "code": 225 },
+            { "name": "Akithii", "code": 226 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tharaka-Nithi",
+      "countyCode": 13,
+      "constituencies": [
+        {
+          "name": "Tharaka",
+          "code": 53,
+          "wards": [
+            { "name": "Marimanti", "code": 227 },
+            { "name": "Gatunga", "code": 228 },
+            { "name": "Nkondi", "code": 229 }
+          ]
+        },
+        {
+          "name": "Maara",
+          "code": 54,
+          "wards": [
+            { "name": "Mitheru", "code": 230 },
+            { "name": "Chogoria", "code": 231 },
+            { "name": "Ganga", "code": 232 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Embu",
+      "countyCode": 14,
+      "constituencies": [
+        {
+          "name": "Manyatta",
+          "code": 55,
+          "wards": [
+            { "name": "Kithimu", "code": 233 },
+            { "name": "Ruguru/Ngandori", "code": 234 },
+            { "name": "Central Ward", "code": 235 }
+          ]
+        },
+        {
+          "name": "Runyenjes",
+          "code": 56,
+          "wards": [
+            { "name": "Kagaari North", "code": 236 },
+            { "name": "Kagaari South", "code": 237 },
+            { "name": "Kyeni North", "code": 238 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kitui",
+      "countyCode": 15,
+      "constituencies": [
+        {
+          "name": "Kitui Central",
+          "code": 57,
+          "wards": [
+            { "name": "Miambani", "code": 239 },
+            { "name": "Township", "code": 240 },
+            { "name": "Kyangwithya West", "code": 241 }
+          ]
+        },
+        {
+          "name": "Kitui East",
+          "code": 58,
+          "wards": [
+            { "name": "Zombe/Mwitika", "code": 242 },
+            { "name": "Nzambani", "code": 243 },
+            { "name": "Chuluni", "code": 244 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Machakos",
+      "countyCode": 16,
+      "constituencies": [
+        {
+          "name": "Machakos Town",
+          "code": 59,
+          "wards": [
+            { "name": "Mumbuni North", "code": 245 },
+            { "name": "Mutituni", "code": 246 },
+            { "name": "Muvuti/Kiima Kimwe", "code": 247 }
+          ]
+        },
+        {
+          "name": "Mavoko",
+          "code": 60,
+          "wards": [
+            { "name": "Athi River", "code": 248 },
+            { "name": "Kinanie", "code": 249 },
+            { "name": "Muthwani", "code": 250 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Makueni",
+      "countyCode": 17,
+      "constituencies": [
+        {
+          "name": "Makueni",
+          "code": 61,
+          "wards": [
+            { "name": "Wote", "code": 251 },
+            { "name": "Mavindini", "code": 252 },
+            { "name": "Kathonzweni", "code": 253 }
+          ]
+        },
+        {
+          "name": "Kibwezi West",
+          "code": 62,
+          "wards": [
+            { "name": "Makindu", "code": 254 },
+            { "name": "Nguumo", "code": 255 },
+            { "name": "Kikumbulyu North", "code": 256 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nyandarua",
+      "countyCode": 18,
+      "constituencies": [
+        {
+          "name": "Kinangop",
+          "code": 63,
+          "wards": [
+            { "name": "Engineer", "code": 257 },
+            { "name": "Njabini", "code": 258 },
+            { "name": "Githabai", "code": 259 }
+          ]
+        },
+        {
+          "name": "Ol Kalou",
+          "code": 64,
+          "wards": [
+            { "name": "Kipipiri", "code": 260 },
+            { "name": "Mirangine", "code": 261 },
+            { "name": "Nyakio", "code": 262 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nyeri",
+      "countyCode": 19,
+      "constituencies": [
+        {
+          "name": "Tetu",
+          "code": 65,
+          "wards": [
+            { "name": "Aguthi-Gaaki", "code": 263 },
+            { "name": "Dedan Kimathi", "code": 264 },
+            { "name": "Wamagana", "code": 265 }
+          ]
+        },
+        {
+          "name": "Kieni",
+          "code": 66,
+          "wards": [
+            { "name": "Naromoru-Kiamathaga", "code": 266 },
+            { "name": "Gatarakwa", "code": 267 },
+            { "name": "Mugunda", "code": 268 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kirinyaga",
+      "countyCode": 20,
+      "constituencies": [
+        {
+          "name": "Mwea",
+          "code": 67,
+          "wards": [
+            { "name": "Tebere", "code": 269 },
+            { "name": "Mutithi", "code": 270 },
+            { "name": "Thiba", "code": 271 }
+          ]
+        },
+        {
+          "name": "Gichugu",
+          "code": 68,
+          "wards": [
+            { "name": "Kabare", "code": 272 },
+            { "name": "Baragwi", "code": 273 },
+            { "name": "Njukiini", "code": 274 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Murang'a",
+      "countyCode": 21,
+      "constituencies": [
+        {
+          "name": "Kangema",
+          "code": 69,
+          "wards": [
+            { "name": "Muguru", "code": 275 },
+            { "name": "Githumu", "code": 276 },
+            { "name": "Kiharu", "code": 277 }
+          ]
+        },
+        {
+          "name": "Maragua",
+          "code": 70,
+          "wards": [
+            { "name": "Kimorori/Wempa", "code": 278 },
+            { "name": "Makuyu", "code": 279 },
+            { "name": "Kambiti", "code": 280 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kiambu",
+      "countyCode": 12,
+      "constituencies": [
+        {
+          "name": "Thika Town",
+          "code": 101,
+          "wards": [
+            { "name": "Thika Township", "code": 1 },
+            { "name": "Makongeni", "code": 2 },
+            { "name": "Kimbo", "code": 3 }
+          ]
+        },
+        {
+          "name": "Gikambura",
+          "code": 102,
+          "wards": [
+            { "name": "Gikambura", "code": 4 },
+            { "name": "Njiru", "code": 5 },
+            { "name": "Zambezi", "code": 6 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Turkana",
+      "countyCode": 33,
+      "constituencies": [
+        {
+          "name": "Turkana North",
+          "code": 111,
+          "wards": [
+            { "name": "Kaaleng", "code": 7 },
+            { "name": "Kainuk", "code": 8 },
+            { "name": "Lokichogio", "code": 9 }
+          ]
+        },
+        {
+          "name": "Turkana South",
+          "code": 112,
+          "wards": [
+            { "name": "Turkana South", "code": 10 },
+            { "name": "Lodwar", "code": 11 },
+            { "name": "Lodwar East", "code": 12 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "West Pokot",
+      "countyCode": 34,
+      "constituencies": [
+        {
+          "name": "Pokot North",
+          "code": 113,
+          "wards": [
+            { "name": "Kacheliba", "code": 13 },
+            { "name": "Kiwawa", "code": 14 },
+            { "name": "Kapenguria", "code": 15 }
+          ]
+        },
+        {
+          "name": "Pokot South",
+          "code": 114,
+          "wards": [
+            { "name": "Sigor", "code": 16 },
+            { "name": "Sori", "code": 17 },
+            { "name": "Samburat", "code": 18 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Samburu",
+      "countyCode": 35,
+      "constituencies": [
+        {
+          "name": "Samburu West",
+          "code": 115,
+          "wards": [
+            { "name": "Samburu East", "code": 19 },
+            { "name": "Samburu West", "code": 20 },
+            { "name": "Samburu North", "code": 21 }
+          ]
+        },
+        {
+          "name": "Samburu East",
+          "code": 116,
+          "wards": [
+            { "name": "Loosuk", "code": 22 },
+            { "name": "Samburu", "code": 23 },
+            { "name": "Mathew's", "code": 24 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Trans Nzoia",
+      "countyCode": 36,
+      "constituencies": [
+        {
+          "name": "Kiminini",
+          "code": 117,
+          "wards": [
+            { "name": "Kiminini", "code": 25 },
+            { "name": "Milimani", "code": 26 },
+            { "name": "Juba", "code": 27 }
+          ]
+        },
+        {
+          "name": "Endebess",
+          "code": 118,
+          "wards": [
+            { "name": "Endebess", "code": 28 },
+            { "name": "Matunda", "code": 29 },
+            { "name": "Kitale", "code": 30 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nakuru",
+      "countyCode": 47,
+      "constituencies": [
+        {
+          "name": "Nakuru Town West",
+          "code": 4701,
+          "wards": [
+            { "name": "Nakuru West", "code": 470101 },
+            { "name": "Bondeni", "code": 470102 },
+            { "name": "Kivumbini", "code": 470103 },
+            { "name": "Shabaab", "code": 470104 },
+            { "name": "Nakuru East", "code": 470105 }
+          ]
+        },
+        {
+          "name": "Nakuru Town East",
+          "code": 4702,
+          "wards": [
+            { "name": "Ponda Mali", "code": 470201 },
+            { "name": "Kiamwangi", "code": 470202 },
+            { "name": "Rivett", "code": 470203 },
+            { "name": "Mokwo", "code": 470204 },
+            { "name": "Free Area", "code": 470205 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kajiado",
+      "countyCode": 47,
+      "constituencies": [
+        {
+          "name": "Kajiado East",
+          "code": 4801,
+          "wards": [
+            { "name": "Ongata Rongai", "code": 480101 },
+            { "name": "Isinya", "code": 480102 },
+            { "name": "Kitengela", "code": 480103 },
+            { "name": "Kiserian", "code": 480104 }
+          ]
+        },
+        {
+          "name": "Kajiado North",
+          "code": 4802,
+          "wards": [
+            { "name": "Ngong", "code": 480201 },
+            { "name": "Kangundo", "code": 480202 },
+            { "name": "Matasia", "code": 480203 },
+            { "name": "Olkiramatian", "code": 480204 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kakamega",
+      "countyCode": 49,
+      "constituencies": [
+        {
+          "name": "Lurambi",
+          "code": 4901,
+          "wards": [
+            { "name": "Lurambi", "code": 490101 },
+            { "name": "Musikoma", "code": 490102 },
+            { "name": "Shibuli", "code": 490103 }
+          ]
+        },
+        {
+          "name": "Kakamega Town",
+          "code": 4902,
+          "wards": [
+            { "name": "Kakamega", "code": 490201 },
+            { "name": "Shamberere", "code": 490202 },
+            { "name": "Bukhungu", "code": 490203 },
+            { "name": "Gikambura", "code": 490204 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Vihiga",
+      "countyCode": 54,
+      "constituencies": [
+        {
+          "name": "Vihiga",
+          "code": 5401,
+          "wards": [
+            { "name": "Vihiga", "code": 540101 },
+            { "name": "Shiru", "code": 540102 },
+            { "name": "Kisumu", "code": 540103 }
+          ]
+        },
+        {
+          "name": "Sabatia",
+          "code": 5402,
+          "wards": [
+            { "name": "Sabatia", "code": 540201 },
+            { "name": "Maseno", "code": 540202 },
+            { "name": "Chavakali", "code": 540203 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bungoma",
+      "countyCode": 55,
+      "constituencies": [
+        {
+          "name": "Bungoma East",
+          "code": 5501,
+          "wards": [
+            { "name": "Kanduyi", "code": 550101 },
+            { "name": "Mukhweya", "code": 550102 },
+            { "name": "Ndivisi", "code": 550103 }
+          ]
+        },
+        {
+          "name": "Bungoma West",
+          "code": 5502,
+          "wards": [
+            { "name": "Mukhongo", "code": 550201 },
+            { "name": "Siritanyi", "code": 550202 },
+            { "name": "Mulei", "code": 550203 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Busia",
+      "countyCode": 56,
+      "constituencies": [
+        {
+          "name": "Busia Town",
+          "code": 5601,
+          "wards": [
+            { "name": "Busia", "code": 560101 },
+            { "name": "Butula", "code": 560102 },
+            { "name": "Sio Port", "code": 560103 }
+          ]
+        },
+        {
+          "name": "Bunyala",
+          "code": 5602,
+          "wards": [
+            { "name": "Bunyala", "code": 560201 },
+            { "name": "Nambale", "code": 560202 },
+            { "name": "Matayos", "code": 560203 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Siaya",
+      "countyCode": 57,
+      "constituencies": [
+        {
+          "name": "Siaya Town",
+          "code": 5701,
+          "wards": [
+            { "name": "Siaya", "code": 570101 },
+            { "name": "Ugunja", "code": 570102 },
+            { "name": "Gem", "code": 570103 }
+          ]
+        },
+        {
+          "name": "Ugunja",
+          "code": 5702,
+          "wards": [
+            { "name": "Ugunja", "code": 570201 },
+            { "name": "Siaya North", "code": 570202 },
+            { "name": "Nambale", "code": 570203 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kisumu",
+      "countyCode": 58,
+      "constituencies": [
+        {
+          "name": "Kisumu Central",
+          "code": 5801,
+          "wards": [
+            { "name": "Kisumu", "code": 580101 },
+            { "name": "Kibos", "code": 580102 },
+            { "name": "Bandani", "code": 580103 }
+          ]
+        },
+        {
+          "name": "Kisumu East",
+          "code": 5802,
+          "wards": [
+            { "name": "Kisumu East", "code": 580201 },
+            { "name": "Obunga", "code": 580202 },
+            { "name": "Nyando", "code": 580203 }
+          ]
+        },
+        {
+          "name": "Kisumu West",
+          "code": 5803,
+          "wards": [
+            { "name": "Ahero", "code": 580301 },
+            { "name": "Kogony", "code": 580302 },
+            { "name": "Nyakach", "code": 580303 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Homa Bay",
+      "countyCode": 59,
+      "constituencies": [
+        {
+          "name": "Homa Bay Town",
+          "code": 5901,
+          "wards": [
+            { "name": "Homa Bay", "code": 590101 },
+            { "name": "Kanyamwa", "code": 590102 },
+            { "name": "Sindo", "code": 590103 }
+          ]
+        },
+        {
+          "name": "Mbita",
+          "code": 5902,
+          "wards": [
+            { "name": "Mbita", "code": 590201 },
+            { "name": "Kamasengre", "code": 590202 },
+            { "name": "Rusinga", "code": 590203 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Migori",
+      "countyCode": 60,
+      "constituencies": [
+        {
+          "name": "Migori",
+          "code": 6001,
+          "wards": [
+            { "name": "Migori", "code": 600101 },
+            { "name": "Rongo", "code": 600102 },
+            { "name": "Nyatike", "code": 600103 }
+          ]
+        },
+        {
+          "name": "Uriri",
+          "code": 6002,
+          "wards": [
+            { "name": "Uriri", "code": 600201 },
+            { "name": "Nyatike", "code": 600202 },
+            { "name": "Panyako", "code": 600203 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kisii",
+      "countyCode": 61,
+      "constituencies": [
+        {
+          "name": "Kisii Town",
+          "code": 6101,
+          "wards": [
+            { "name": "Kisii", "code": 610101 },
+            { "name": "Bogichora", "code": 610102 },
+            { "name": "Magena", "code": 610103 }
+          ]
+        },
+        {
+          "name": "Kenya Town",
+          "code": 6102,
+          "wards": [
+            { "name": "Bungoma", "code": 610201 },
+            { "name": "Bogichora", "code": 610202 },
+            { "name": "South Mugirango", "code": 610203 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nyamira",
+      "countyCode": 62,
+      "constituencies": [
+        {
+          "name": "Nyamira Town",
+          "code": 6201,
+          "wards": [
+            { "name": "Nyamira", "code": 620101 },
+            { "name": "Egesa", "code": 620102 },
+            { "name": "Kenya", "code": 620103 }
+          ]
+        },
+        {
+          "name": "Gucha",
+          "code": 6202,
+          "wards": [
+            { "name": "Gucha", "code": 620201 },
+            { "name": "Nyamache", "code": 620202 },
+            { "name": "Gichugu", "code": 620203 }
+          ]
+        }
+      ]
+    }
+  ]
+}
+  
