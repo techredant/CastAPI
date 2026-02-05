@@ -1,49 +1,28 @@
 const express = require("express");
-const cors = require("cors");
 const { StreamChat } = require("stream-chat");
-require("dotenv").config();
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-const STREAM_KEY = process.env.STREAM_CHAT_KEY;
-const STREAM_SECRET = process.env.STREAM_CHAT_SECRET;
-
-if (!STREAM_KEY || !STREAM_SECRET) {
-  throw new Error("❌ Missing Stream API key or secret in environment variables");
-}
+const router = express.Router();
 
 const serverClient = StreamChat.getInstance(
-  STREAM_KEY,
-  STREAM_SECRET
+  process.env.STREAM_API_KEY,
+  process.env.STREAM_API_SECRET
 );
 
-/**
- * Create Stream token
- * MUST be fresh on every request
- */
-app.post("/api/stream/token", async (req, res) => {
-  const { userId, name, image } = req.body;
-
-  if (!userId) {
-    return res.status(400).json({ error: "userId is required" });
-  }
-
+router.get("/stream-token", async (req, res) => {
   try {
-    // 🔐 Ensure user exists in Stream
-    await serverClient.upsertUser({
-      id: userId,
-      name: name || "User",
-      image,
-    });
+    const userId = req.query.userId; // or from auth middleware
 
-    // 🔥 DO NOT pass exp — Stream handles it safely
+    if (!userId) {
+      return res.status(400).json({ message: "Missing userId" });
+    }
+
     const token = serverClient.createToken(userId);
 
-    return res.status(200).json({ token });
+    res.status(200).json({ token });
   } catch (err) {
-    console.error("❌ Stream token error:", err);
-    return res.status(500).json({ error: "Failed to create Stream token" });
+    console.error("Stream token error:", err);
+    res.status(500).json({ message: "Failed to create token" });
   }
 });
+
+module.exports = router;
