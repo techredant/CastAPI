@@ -54,7 +54,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/products", productRoutes);
 // app.use("/api/news", newsRoutes);
 app.use("/api/ai-reply", aiRoutes)
-app.use("/api/stream-token", streamRoutes);
+app.use("/api", streamRoutes);
 
 
 
