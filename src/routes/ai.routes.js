@@ -12,6 +12,24 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// upsert ai
+
+router.post("/upsert-ai", async (req, res) => {
+  try {
+    await streamClient.upsertUser({
+      id: "ai-assistant",
+      name: "AI Assistant",
+      role: "admin",
+      image: "https://i.imgur.com/7k12EPD.png",
+    });
+
+    res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error("Upsert AI failed:", err);
+    res.status(500).json({ error: "Failed to create AI user" });
+  }
+});
+
 router.post("/ai-reply", async (req, res) => {
   try {
     const { message, channel_id } = req.body;
