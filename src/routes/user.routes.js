@@ -10,8 +10,8 @@ const { StreamChat } = require("stream-chat");
 const router = express.Router();
 
 const chatServer = StreamChat.getInstance(
-  process.env.STREAM_CHAT_KEY,
-  process.env.STREAM_CHAT_SECRET
+  process.env.STREAM_API_KEY,
+  process.env.STREAM_API_SECRET
 );
 
 // const STREAM_VIDEO_API = "https://video.stream-io-api.com/video/v1";
