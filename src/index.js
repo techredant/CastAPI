@@ -47,7 +47,6 @@ const productRoutes = require("./routes/product.routes");
 // const newsRoutes = require("./routes/news.routes");
 const aiRoutes = require("./routes/ai.routes")
 const streamRoutes = require("./routes/stream.routes");
-const upsertAiRoutes = require("./routes/upsertai.routes");
 
 
 app.use("/api/users", userRoutes);
@@ -55,7 +54,6 @@ app.use("/api/posts", postRoutes);
 app.use("/api/products", productRoutes);
 // app.use("/api/news", newsRoutes);
 app.use("/api/ai-reply", aiRoutes)
-app.use("/api/upsert-ai", upsertAiRoutes)
 
 app.use("/api", streamRoutes);
 
