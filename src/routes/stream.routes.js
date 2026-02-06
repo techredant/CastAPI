@@ -1,27 +1,29 @@
+// routes/stream.routes.js
 const express = require("express");
-const { StreamChat } = require("stream-chat");
-
 const router = express.Router();
+const { StreamChat } = require("stream-chat");
 
 const serverClient = StreamChat.getInstance(
   process.env.STREAM_API_KEY,
   process.env.STREAM_API_SECRET
 );
 
-router.get("/stream-token", async (req, res) => {
+router.post("/token", async (req, res) => {
+  const { user_id, name } = req.body;
+
+  if (!user_id || !name) return res.status(400).json({ ok: false, error: "Missing user info" });
+
   try {
-    const userId = req.query.userId; // or from auth middleware
+    // Upsert user server-side
+    await serverClient.upsertUser({ id: user_id, name });
 
-    if (!userId) {
-      return res.status(400).json({ message: "Missing userId" });
-    }
+    // Generate a user token (server-side!)
+    const token = serverClient.createToken(user_id);
 
-    const token = serverClient.createToken(userId);
-
-    res.status(200).json({ token });
+    res.status(200).json({ ok: true, token });
   } catch (err) {
-    console.error("Stream token error:", err);
-    res.status(500).json({ message: "Failed to create token" });
+    console.error("Stream token creation failed:", err);
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 
