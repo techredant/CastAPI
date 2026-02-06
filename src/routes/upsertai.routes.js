@@ -2,6 +2,11 @@ const express = require("express");
 const router = express.Router();
 const { StreamChat } = require("stream-chat");
 
+const serverClient = StreamChat.getInstance(
+  process.env.STREAM_API_KEY,
+  process.env.STREAM_API_SECRET
+);
+
 // ================= CREATE AI ASSISTANT USER =================
 // POST /api/upsertai
 router.post("/", async (req, res) => {
