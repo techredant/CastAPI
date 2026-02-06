@@ -1,44 +1,41 @@
+// routes/ai.routes.js
 const express = require("express");
-const router = express.Router();
 const { StreamChat } = require("stream-chat");
-const OpenAI = require("openai");
+const router = express.Router();
 
 const streamClient = StreamChat.getInstance(
   process.env.STREAM_API_KEY,
   process.env.STREAM_API_SECRET
 );
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// upsert ai
-
-router.post("/get-ai-channel", async (req, res) => {
+router.post("/", async (req, res) => {
   const { user_id } = req.body;
+  if (!user_id) return res.status(400).json({ error: "Missing user_id" });
 
   try {
-    // 1️⃣ Upsert AI
-    await streamClient.upsertUser({ id: "ai-assistant", name: "AI Assistant" });
+    // 1️⃣ Upsert AI user
+    await streamClient.upsertUser({
+      id: "ai-assistant",
+      name: "AI Assistant",
+      role: "admin",
+    });
 
-    // 2️⃣ Upsert current user (optional)
+    // 2️⃣ Upsert the current user
     await streamClient.upsertUser({ id: user_id });
 
-    // 3️⃣ Create/get channel
+    // 3️⃣ Get or create channel
     const channelId = `ai-chat-${user_id}`;
     const channel = streamClient.channel("messaging", channelId, {
       members: [user_id, "ai-assistant"],
     });
 
-    await channel.create();
+    await channel.watch(); // safe: get or create channel
 
-    res.status(200).json({ ok: true, channel_id: channelId });
+    return res.status(200).json({ ok: true, channel_id: channelId });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to create AI channel" });
+    console.error("AI channel creation failed:", err);
+    return res.status(500).json({ error: "Failed to create AI channel" });
   }
 });
-
-
 
 module.exports = router;
