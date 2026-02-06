@@ -1,46 +1,65 @@
 const express = require("express");
 const router = express.Router();
+const { StreamChat } = require("stream-chat");
+const OpenAI = require("openai");
+
+const streamClient = StreamChat.getInstance(
+  process.env.STREAM_API_KEY,
+  process.env.STREAM_API_SECRET
+);
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 router.post("/ai-reply", async (req, res) => {
   try {
-    const { messages } = req.body;
+    const { message, channel_id } = req.body;
 
-    if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: "Invalid messages format" });
+    if (!message?.text || !channel_id) {
+      return res.status(400).json({ error: "Invalid payload" });
     }
 
-    console.log("AI CHAT REQUEST:", messages[messages.length - 1]);
+    // 1️⃣ Get channel
+    const channel = streamClient.channel("messaging", channel_id);
 
-    const cfResponse = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
-          "Content-Type": "application/json",
+    // 2️⃣ Show AI typing indicator
+    await channel.sendEvent({
+      type: "ai.typing",
+    });
+
+    // 3️⃣ Call AI
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful AI assistant.",
         },
-        body: JSON.stringify({
-          messages: messages.map((m) => ({
-            role: m.role === "ai" ? "assistant" : "user",
-            content: m.text,
-          })),
-        }),
-      }
-    );
+        {
+          role: "user",
+          content: message.text,
+        },
+      ],
+    });
 
-    const result = await cfResponse.json();
-
-    console.log("CF RESPONSE:", result);
-
-    const reply =
-      result?.result?.response ||
+    const aiReply =
+      completion.choices[0]?.message?.content ||
       "Sorry, I couldn't generate a response.";
 
-    return res.json({ reply });
-  } catch (error) {
-    console.error("AI CHAT ERROR:", error);
-    return res.status(500).json({ error: "AI failed" });
+    // 4️⃣ Send AI message to Stream
+    await channel.sendMessage({
+      text: aiReply,
+      user_id: "ai-assistant",
+    });
+
+    // 5️⃣ Done
+    res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error("AI reply error:", err);
+    res.status(500).json({ error: "AI failed" });
   }
 });
+
 
 module.exports = router;
