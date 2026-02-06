@@ -4,7 +4,7 @@ const { StreamChat } = require("stream-chat");
 
 // Stream client
 const client = StreamChat.getInstance(
-  pprocess.env.STREAM_API_KEY,
+  process.env.STREAM_API_KEY,
   process.env.STREAM_API_SECRET // server secret
 );
 
