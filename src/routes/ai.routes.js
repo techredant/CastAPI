@@ -8,7 +8,18 @@ const serverClient = StreamChat.getInstance(
   process.env.STREAM_API_SECRET
 );
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// 🔐 Ensure AI user exists (do this once)
+async function ensureAiUser() {
+  await serverClient.upsertUser({
+    id: "ai-bot",
+    name: "AI Assistant",
+  });
+}
+ensureAiUser();
 
 async function getAIReply(text) {
   const completion = await openai.chat.completions.create({
@@ -20,30 +31,35 @@ async function getAIReply(text) {
 }
 
 router.post("/", async (req, res) => {
-  const event = req.body;
-
-  // ✅ Only respond to new user messages
-  if (
-    event.type !== "message.new" ||
-    !event.message?.text ||
-    event.message.user.id === "ai-bot"
-  ) {
-    return res.status(200).end();
-  }
-
-  const channel = serverClient.channel(
-    event.channel_type,
-    event.channel_id
-  );
-
   try {
-    // 🔵 start typing
-    await channel.sendEvent({
-      type: "typing.start",
-      user_id: "ai-bot",
-    });
+    const event = req.body;
 
-    const aiReply = await getAIReply(event.message.text);
+    // ✅ Only handle new user messages
+    if (
+      event.type !== "message.new" ||
+      !event.message?.text ||
+      event.message.user?.id === "ai-bot"
+    ) {
+      return res.status(200).end();
+    }
+
+    console.log("💬 user message:", event.message.text);
+
+    const channel = serverClient.channel(
+      event.channel_type,
+      event.channel_id
+    );
+
+    // 🔵 Start typing
+    await channel.sendTypingEvent({ user_id: "ai-bot" });
+
+    let aiReply;
+    try {
+      aiReply = await getAIReply(event.message.text);
+    } catch (aiErr) {
+      console.error("❌ OpenAI error:", aiErr);
+      aiReply = "⚠️ Sorry, I had trouble thinking just now.";
+    }
 
     await channel.sendMessage({
       text: aiReply,
@@ -51,16 +67,19 @@ router.post("/", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("AI webhook error:", err);
-
+    console.error("❌ AI webhook error:", err);
   } finally {
-    // 🔵 stop typing ALWAYS
-    await channel.sendEvent({
-      type: "typing.stop",
-      user_id: "ai-bot",
-    });
+    // 🔵 Always stop typing
+    try {
+      const channel = serverClient.channel(
+        req.body.channel_type,
+        req.body.channel_id
+      );
+      await channel.stopTypingEvent({ user_id: "ai-bot" });
+    } catch {}
   }
 
+  // ⚠️ Always return 200 to Stream
   res.status(200).end();
 });
 
