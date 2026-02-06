@@ -3,7 +3,7 @@ const router = express.Router();
 const { StreamChat } = require("stream-chat");
 
 // ================= CREATE AI ASSISTANT USER =================
-// POST /api/createAiUser
+// POST /api/upsertai
 router.post("/", async (req, res) => {
   try {
     const serverClient = StreamChat.getInstance(

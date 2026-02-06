@@ -46,7 +46,7 @@ const postRoutes = require("./routes/post.routes")(io);
 const productRoutes = require("./routes/product.routes");
 // const newsRoutes = require("./routes/news.routes");
 const aiRoutes = require("./routes/ai.routes")
-const aiRoutes = require("./routes/upsertai.routes")
+const upsertRoutes = require("./routes/upsertai.routes")
 
 const streamRoutes = require("./routes/stream.routes");
 
@@ -57,8 +57,8 @@ app.use("/api/products", productRoutes);
 
 app.use("/api/stream", streamRoutes);
 
-app.use("/api/upsert",  aiRoutes);
-app.use("/api/ai-reply", streamRoutes);
+app.use("/api/upsert",  upsertRoutes);
+app.use("/api/ai-reply", aiRoutes);
 
 
 
