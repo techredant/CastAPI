@@ -55,7 +55,7 @@ app.use("/api/products", productRoutes);
 // app.use("/api/news", newsRoutes);
 app.use("/api/get-ai-channel", aiRoutes)
 
-app.use("/api", streamRoutes);
+app.use("/api/stream", streamRoutes);
 
 
 
