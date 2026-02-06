@@ -53,7 +53,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/products", productRoutes);
 // app.use("/api/news", newsRoutes);
-app.use("/api/ai-reply", aiRoutes)
+app.use("/api/get-ai-channel", aiRoutes)
 
 app.use("/api", streamRoutes);
 
