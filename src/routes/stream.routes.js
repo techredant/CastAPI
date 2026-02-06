@@ -9,16 +9,16 @@ const serverClient = StreamChat.getInstance(
 );
 
 router.post("/token", async (req, res) => {
-  const { user_id, name } = req.body;
+  const { userId } = req.body;
 
-  if (!user_id || !name) return res.status(400).json({ ok: false, error: "Missing user info" });
+  if (!userId) {
+    return res.status(400).json({ ok: false, error: "Missing userId" });
+  }
 
   try {
-    // Upsert user server-side
-    await serverClient.upsertUser({ id: user_id, name });
+    await serverClient.upsertUser({ id: userId });
 
-    // Generate a user token (server-side!)
-    const token = serverClient.createToken(user_id);
+    const token = serverClient.createToken(userId);
 
     res.status(200).json({ ok: true, token });
   } catch (err) {
