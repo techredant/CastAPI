@@ -26,7 +26,15 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ ok: false, error: "Missing channelId or text" });
   }
 
+  const channel = serverClient.channel("messaging", channelId);
+
   try {
+    // 🔵 AI STARTS TYPING
+    await channel.sendEvent({
+      type: "typing.start",
+      user_id: "ai-bot",
+    });
+
     // Generate AI response
     const aiReply = await getAIReply(text);
 
@@ -34,18 +42,24 @@ router.post("/", async (req, res) => {
       throw new Error("AI returned empty response");
     }
 
-    // Send message to Stream as ai-bot
-    const channel = serverClient.channel("messaging", channelId);
-    await channel.watch(); // ensure channel exists
+    // Send AI message
     await channel.sendMessage({
       text: aiReply,
       user_id: "ai-bot",
     });
 
-    res.status(200).json({ ok: true, message: "AI reply sent" });
+    res.status(200).json({ ok: true });
+
   } catch (err) {
     console.error("AI reply failed:", err);
     res.status(500).json({ ok: false, error: err.message });
+
+  } finally {
+    // 🔵 AI STOPS TYPING (ALWAYS)
+    await channel.sendEvent({
+      type: "typing.stop",
+      user_id: "ai-bot",
+    });
   }
 });
 
