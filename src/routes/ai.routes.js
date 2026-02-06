@@ -20,47 +20,48 @@ async function getAIReply(text) {
 }
 
 router.post("/", async (req, res) => {
-  const { channelId, text } = req.body;
+  const event = req.body;
 
-  if (!channelId || !text) {
-    return res.status(400).json({ ok: false, error: "Missing channelId or text" });
+  // ✅ Only respond to new user messages
+  if (
+    event.type !== "message.new" ||
+    !event.message?.text ||
+    event.message.user.id === "ai-bot"
+  ) {
+    return res.status(200).end();
   }
 
-  const channel = serverClient.channel("messaging", channelId);
+  const channel = serverClient.channel(
+    event.channel_type,
+    event.channel_id
+  );
 
   try {
-    // 🔵 AI STARTS TYPING
+    // 🔵 start typing
     await channel.sendEvent({
       type: "typing.start",
       user_id: "ai-bot",
     });
 
-    // Generate AI response
-    const aiReply = await getAIReply(text);
+    const aiReply = await getAIReply(event.message.text);
 
-    if (!aiReply || !aiReply.trim()) {
-      throw new Error("AI returned empty response");
-    }
-
-    // Send AI message
     await channel.sendMessage({
       text: aiReply,
       user_id: "ai-bot",
     });
 
-    res.status(200).json({ ok: true });
-
   } catch (err) {
-    console.error("AI reply failed:", err);
-    res.status(500).json({ ok: false, error: err.message });
+    console.error("AI webhook error:", err);
 
   } finally {
-    // 🔵 AI STOPS TYPING (ALWAYS)
+    // 🔵 stop typing ALWAYS
     await channel.sendEvent({
       type: "typing.stop",
       user_id: "ai-bot",
     });
   }
+
+  res.status(200).end();
 });
 
 module.exports = router;
