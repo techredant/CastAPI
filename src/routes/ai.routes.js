@@ -2,37 +2,28 @@ const express = require("express");
 const router = express.Router();
 const { StreamChat } = require("stream-chat");
 
-// Stream client
 const client = StreamChat.getInstance(
   process.env.STREAM_API_KEY,
-  process.env.STREAM_API_SECRET // server secret
+  process.env.STREAM_API_SECRET
 );
 
-// POST WEBHOOK FROM STREAM
-router.post("/ai-reply", async (req, res) => {
+const AI_USER_ID = "ai-assistant";
+
+router.post("/", async (req, res) => {
   try {
-    const body = req.body;
-    const type = body.type;
-    const message = body.message;
-    const channel_id = body.channel?.id || body.channel_id;
+    const { type, message, channel } = req.body;
 
-    console.log("Incoming webhook:", type);
-
-    // Ignore non-new messages
+    // Only react to new messages
     if (type !== "message.new") {
       return res.json({ received: true });
     }
 
-    // Prevent AI replying to itself
-    if (message?.user?.id === "ai-assistant") {
+    // Prevent AI loop
+    if (message.user.id === AI_USER_ID) {
       return res.json({ ignored: true });
     }
 
-    // ---------------------------
-    // 1️⃣ CALL CLOUDFLARE AI
-    // ---------------------------
-    console.log("Calling Cloudflare AI...");
-
+    // ---------------- AI CALL ----------------
     const cfResponse = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
       {
@@ -51,31 +42,20 @@ router.post("/ai-reply", async (req, res) => {
     );
 
     const result = await cfResponse.json();
-    console.log("CF RAW RESPONSE:", result);
+    const aiText =
+      result?.result?.response || "I'm here to help 🙂";
 
-    const aiResponse =
-      result?.result?.response || "Hello! How can I help you?";
-
-    // ---------------------------
-    // 2️⃣ SEND MESSAGE TO STREAM
-    // ---------------------------
-    console.log("Sending AI message to channel:", channel_id);
-
-    const channel = client.channel("messaging", channel_id, {
-      created_by_id: "ai-assistant",
+    // ---------------- SEND TO STREAM ----------------
+    const channelRef = client.channel("messaging", channel.id);
+    await channelRef.sendMessage({
+      text: aiText,
+      user_id: AI_USER_ID,
     });
 
-    await channel.watch();
-
-    await channel.sendMessage({
-      text: aiResponse,
-      user_id: "ai-assistant",
-    });
-
-    return res.json({ success: true, reply: aiResponse });
-  } catch (error) {
-    console.error("AI reply error:", error);
-    return res.status(500).json({ error: error.message });
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("AI webhook error:", err);
+    return res.status(500).json({ error: "AI failed" });
   }
 });
 
