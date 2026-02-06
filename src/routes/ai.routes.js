@@ -51,7 +51,7 @@ router.post("/", async (req, res) => {
     );
 
     // 🔵 Start typing
-    await channel.sendTypingEvent({ user_id: "ai-bot" });
+    await channel.lastTypingEvent({ user_id: "ai-bot" });
 
     let aiReply;
     try {
@@ -75,7 +75,7 @@ router.post("/", async (req, res) => {
         req.body.channel_type,
         req.body.channel_id
       );
-      await channel.stopTypingEvent({ user_id: "ai-bot" });
+      await channel.lastTypingEvent({ user_id: "ai-bot" });
     } catch {}
   }
 
