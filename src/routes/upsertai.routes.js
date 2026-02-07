@@ -23,9 +23,9 @@ router.post("/", async (req, res) => {
       name,
     });
 
-    // 2️⃣ Ensure AI bot exists (IMPORTANT 🔥)
+    // 2️⃣ Ensure AI broad exists (IMPORTANT 🔥)
     await serverClient.upsertUser({
-      id: "ai-bot",
+      id: "ai-broad",
       name: "AI Assistant",
       image: "https://placekitten.com/200/200",
     });
