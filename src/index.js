@@ -41,17 +41,15 @@ io.on("connection", (socket) => {
   });
 });
 
-const aiRoutes = require("./routes/ai.routes")
-const upsertRoutes = require("./routes/upsertai.routes")
 const userRoutes = require("./routes/user.routes");
 const postRoutes = require("./routes/post.routes")(io);
 const productRoutes = require("./routes/product.routes");
 // const newsRoutes = require("./routes/news.routes");
+const aiRoutes = require("./routes/ai.routes")
+const upsertRoutes = require("./routes/upsertai.routes")
 
 const streamRoutes = require("./routes/stream.routes");
 
-app.use("/api/ai-reply", aiRoutes);
-app.use("/api/upsert-ai",  upsertRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/products", productRoutes);
@@ -59,7 +57,8 @@ app.use("/api/products", productRoutes);
 
 app.use("/api/stream", streamRoutes);
 
-
+app.use("/api/upsert",  upsertRoutes);
+app.use("/api/ai-reply", aiRoutes);
 
 
 
