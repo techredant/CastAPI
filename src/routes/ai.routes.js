@@ -83,7 +83,7 @@ async function getAIReply(text) {
 //   res.status(200).end();
 // });
 
-router.post("/ai-reply", async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const event = req.body;
 
