@@ -51,7 +51,7 @@ const productRoutes = require("./routes/product.routes");
 const streamRoutes = require("./routes/stream.routes");
 
 app.use("/api/ai-reply", aiRoutes);
-app.use("/api/upsert",  upsertRoutes);
+app.use("/api/upsert-ai",  upsertRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/products", productRoutes);

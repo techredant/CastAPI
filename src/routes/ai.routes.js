@@ -9,7 +9,7 @@ const client = StreamChat.getInstance(
 );
 
 // POST WEBHOOK FROM STREAM
-router.post("/ai-reply", async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const body = req.body;
     const type = body.type;
