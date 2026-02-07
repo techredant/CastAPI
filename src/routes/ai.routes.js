@@ -15,7 +15,7 @@ const openai = new OpenAI({
 // 🔐 Ensure AI user exists (do this once)
 async function ensureAiUser() {
   await serverClient.upsertUser({
-    id: "ai-bot",
+    id: "ai-broad",
     name: "AI Assistant",
   });
 }
@@ -38,7 +38,7 @@ router.post("/", async (req, res) => {
     if (
       event.type !== "message.new" ||
       !event.message?.text ||
-      event.message.user?.id === "ai-bot"
+      event.message.user?.id === "ai-broad"
     ) {
       return res.status(200).end();
     }
@@ -51,7 +51,7 @@ router.post("/", async (req, res) => {
     );
 
     // 🔵 Start typing
-    await channel.lastTypingEvent({ user_id: "ai-bot" });
+    await channel.lastTypingEvent({ user_id: "ai-broad" });
 
     let aiReply;
     try {
@@ -63,7 +63,7 @@ router.post("/", async (req, res) => {
 
     await channel.sendMessage({
       text: aiReply,
-      user_id: "ai-bot",
+      user_id: "ai-broad",
     });
 
   } catch (err) {
@@ -75,7 +75,7 @@ router.post("/", async (req, res) => {
         req.body.channel_type,
         req.body.channel_id
       );
-      await channel.lastTypingEvent({ user_id: "ai-bot" });
+      await channel.lastTypingEvent({ user_id: "ai-broad" });
     } catch {}
   }
 
