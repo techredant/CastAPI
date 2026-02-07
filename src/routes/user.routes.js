@@ -153,30 +153,30 @@ router.get("/:clerkId", async (req, res) => {
   }
 });
 
-// // ------------------- UPDATE USER IMAGE -------------------
-// router.post("/update-image", async (req, res) => {
-//   try {
-//     const { clerkId, image } = req.body;
-//     if (!clerkId || !image) {
-//       return res.status(400).json({ error: "clerkId and image are required" });
-//     }
+// ------------------- UPDATE USER IMAGE -------------------
+router.post("/update-image", async (req, res) => {
+  try {
+    const { clerkId, image } = req.body;
+    if (!clerkId || !image) {
+      return res.status(400).json({ error: "clerkId and image are required" });
+    }
 
-//     const user = await User.findOneAndUpdate(
-//       { clerkId },
-//       { image },
-//       { new: true }
-//     );
+    const user = await User.findOneAndUpdate(
+      { clerkId },
+      { image },
+      { new: true }
+    );
 
-//     if (!user) {
-//       return res.status(404).json({ error: "User not found" });
-//     }
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-//     res.json({ success: true, user });
-//   } catch (err) {
-//     console.error("Error updating profile image:", err);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// });
+    res.json({ success: true, user });
+  } catch (err) {
+    console.error("Error updating profile image:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 
 // // ------------------- FOLLOW -------------------
