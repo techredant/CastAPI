@@ -27,4 +27,16 @@ router.post("/token", async (req, res) => {
   }
 });
 
+// POST /api/video-token
+router.post("/video-token", async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) return res.status(400).json({ error: "Missing userId" });
+
+  const token = serverClient.createToken(userId);
+
+  res.json({ token });
+});
+
+
 module.exports = router;
