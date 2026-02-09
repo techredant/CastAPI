@@ -7,38 +7,35 @@ const serverClient = StreamChat.getInstance(
   process.env.STREAM_API_SECRET
 );
 
-// ================= CREATE AI ASSISTANT USER =================
-// POST /api/upsertai
 router.post("/", async (req, res) => {
   const { user_id, name } = req.body;
 
   if (!user_id || !name) {
-    return res.status(400).json({ ok: false, error: "Missing user info" });
+    return res.status(400).json({ error: "Missing user info" });
   }
 
   try {
-    // 1️⃣ Ensure real user exists
+    // Ensure user exists
     await serverClient.upsertUser({
       id: user_id,
       name,
     });
 
-    // 2️⃣ Ensure AI broad exists (IMPORTANT 🔥)
+    // Ensure AI exists
     await serverClient.upsertUser({
       id: "ai-assistant",
       name: "AI Assistant",
       image: "https://placekitten.com/200/200",
     });
 
-    // 3️⃣ Create token
+    // Create token
     const token = serverClient.createToken(user_id);
 
-    res.status(200).json({ ok: true, token });
+    return res.status(200).json({ token });
   } catch (err) {
-    console.error("Stream token creation failed:", err);
-    res.status(500).json({ ok: false, error: err.message });
+    console.error("Stream token error:", err);
+    return res.status(500).json({ error: "Token failed" });
   }
 });
-
 
 module.exports = router;

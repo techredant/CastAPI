@@ -57,7 +57,7 @@ app.use("/api/products", productRoutes);
 
 app.use("/api/stream", streamRoutes);
 
-app.use("/api/upsert",  upsertRoutes);
+app.use("/api/upsertai",  upsertRoutes);
 app.use("/api/ai-reply", aiRoutes);
 
 
