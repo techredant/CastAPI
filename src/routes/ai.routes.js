@@ -2,23 +2,19 @@ const express = require("express");
 const router = express.Router();
 const { StreamChat } = require("stream-chat");
 
-// Stream client
+// Stream server client
 const client = StreamChat.getInstance(
   process.env.STREAM_API_KEY,
-  process.env.STREAM_API_SECRET_KEY
+  process.env.STREAM_API_SECRET
 );
 
-// POST WEBHOOK FROM STREAM
-router.post("/ai-reply", async (req, res) => {
+router.post("/", async (req, res) => {
   try {
-    const body = req.body;
-    const type = body.type;
-    const message = body.message;
-    const channel_id = body.channel?.id || body.channel_id;
+    const { type, message, channel_id } = req.body;
 
     console.log("Incoming webhook:", type);
 
-    // Ignore non-new messages
+    // Only respond to new messages
     if (type !== "message.new") {
       return res.json({ received: true });
     }
@@ -28,11 +24,7 @@ router.post("/ai-reply", async (req, res) => {
       return res.json({ ignored: true });
     }
 
-    // ---------------------------
-    // 1️⃣ CALL CLOUDFLARE AI
-    // ---------------------------
-    console.log("Calling Cloudflare AI...");
-
+    // 1️⃣ Call Cloudflare AI
     const cfResponse = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
       {
@@ -43,7 +35,7 @@ router.post("/ai-reply", async (req, res) => {
         },
         body: JSON.stringify({
           messages: [
-            { role: "system", content: "You are a helpful AI assistant." },
+            { role: "system", content: "You are a helpful AI assistant in a chat app." },
             { role: "user", content: message.text },
           ],
         }),
@@ -53,28 +45,20 @@ router.post("/ai-reply", async (req, res) => {
     const result = await cfResponse.json();
     console.log("CF RAW RESPONSE:", result);
 
-    const aiResponse =
-      result?.result?.response || "Hello! How can I help you?";
+    const aiText =
+      result?.result?.response ||
+      "Sorry, I didn’t quite get that. Can you rephrase?";
 
-    // ---------------------------
-    // 2️⃣ SEND MESSAGE TO STREAM
-    // ---------------------------
-    console.log("Sending AI message to channel:", channel_id);
-
-    const channel = client.channel("messaging", channel_id, {
-      created_by_id: "ai-assistant",
-    });
-
+    // 2️⃣ Send AI message to Stream
+    const channel = client.channel("messaging", channel_id);
     await channel.watch();
 
-    const reply = `AI says: ${message.text}`;
-
     await channel.sendMessage({
-      text: reply,
+      text: aiText,
       user_id: "ai-assistant",
     });
 
-    return res.json({ success: true, reply: aiResponse });
+    return res.json({ success: true, reply: aiText });
   } catch (error) {
     console.error("AI reply error:", error);
     return res.status(500).json({ error: error.message });
