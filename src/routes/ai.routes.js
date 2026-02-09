@@ -1,126 +1,58 @@
-// const express = require("express");
-// const router = express.Router();
-// const { StreamChat } = require("stream-chat");
-// const OpenAI = require("openai");
-
-// const serverClient = StreamChat.getInstance(
-//   process.env.STREAM_API_KEY,
-//   process.env.STREAM_API_SECRET
-// );
-
-// const openai = new OpenAI({
-//   apiKey: process.env.OPENAI_API_KEY,
-// });
-
-// // 🔐 Ensure AI user exists (do this once)
-// async function ensureAiUser() {
-//   await serverClient.upsertUser({
-//     id: "ai-broad",
-//     name: "AI Assistant",
-//   });
-// }
-// ensureAiUser();
-
-// async function getAIReply(text) {
-//   const completion = await openai.chat.completions.create({
-//     model: "gpt-4.1-mini",
-//     messages: [{ role: "user", content: text }],
-//   });
-
-//   return completion.choices[0].message.content;
-// }
-
-// router.post("/", async (req, res) => {
-//   const event = req.body;
-
-//   try {
-//     if (
-//       event.type !== "message.new" ||
-//       !event.message?.text ||
-//       event.message.user?.id === "ai-broad"
-//     ) {
-//       return res.status(200).end();
-//     }
-
-//     console.log("💬 user message:", event.message.text);
-
-//     const channel = serverClient.channel(
-//       event.channel_type,
-//       event.channel_id
-//     );
-
-//     // 👀 REQUIRED for bots
-//     await channel.watch();
-
-//     // ⌨️ typing start
-//     await channel.sendEvent({
-//       type: "typing.start",
-//       user_id: "ai-broad",
-//     });
-
-//     let aiReply;
-//     try {
-//       aiReply = await getAIReply(event.message.text);
-//     } catch (err) {
-//       console.error("❌ OpenAI error:", err);
-//       aiReply = "⚠️ Sorry, I had a brain freeze.";
-//     }
-
-//     await channel.sendMessage({
-//       text: aiReply,
-//       user_id: "ai-broad",
-//     });
-
-//     // ⌨️ typing stop
-//     await channel.sendEvent({
-//       type: "typing.stop",
-//       user_id: "ai-broad",
-//     });
-
-//   } catch (err) {
-//     console.error("❌ AI webhook error:", err);
-//   }
-
-//   res.status(200).end();
-// });
-
-// module.exports = router;
-
 const express = require("express");
 const router = express.Router();
 const { StreamChat } = require("stream-chat");
 
+const AI_USER_ID = "ai-assistant";
+
 // Stream client
 const client = StreamChat.getInstance(
   process.env.STREAM_API_KEY,
-  process.env.STREAM_API_SECRET_KEY
+  process.env.STREAM_API_SECRET
 );
 
-// POST WEBHOOK FROM STREAM
-router.post("/ai-reply", async (req, res) => {
+// Ensure AI user exists ONCE
+(async () => {
   try {
-    const body = req.body;
-    const type = body.type;
-    const message = body.message;
-    const channel_id = body.channel?.id || body.channel_id;
+    await client.upsertUser({
+      id: AI_USER_ID,
+      name: "AI Assistant 🤖",
+    });
+  } catch (e) {
+    console.error("AI user upsert failed:", e);
+  }
+})();
 
-    console.log("Incoming webhook:", type);
+router.post("/", async (req, res) => {
+  try {
+    const event = req.body;
 
-    // Ignore non-new messages
-    if (type !== "message.new") {
-      return res.json({ received: true });
-    }
+    console.log("🔥 Stream event:", event.type);
 
-    // Prevent AI replying to itself
-    if (message?.user?.id === "ai-assistant") {
+    // Only respond to new user messages
+    if (
+      event.type !== "message.new" ||
+      !event.message?.text ||
+      event.message.user?.id === AI_USER_ID
+    ) {
       return res.json({ ignored: true });
     }
 
-    // ---------------------------
-    // 1️⃣ CALL CLOUDFLARE AI
-    // ---------------------------
-    console.log("Calling Cloudflare AI...");
+    const channel = client.channel(
+      event.channel_type,
+      event.channel_id
+    );
 
+    await channel.watch();
+
+    // ⌨️ typing start
+    await channel.sendEvent({
+      type: "typing.start",
+      user_id: AI_USER_ID,
+    });
+
+    // -------------------------
+    // 🌩️ Cloudflare AI
+    // -------------------------
     const cfResponse = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
       {
@@ -132,38 +64,44 @@ router.post("/ai-reply", async (req, res) => {
         body: JSON.stringify({
           messages: [
             { role: "system", content: "You are a helpful AI assistant." },
-            { role: "user", content: message.text },
+            { role: "user", content: event.message.text },
           ],
         }),
       }
     );
 
-    const result = await cfResponse.json();
-    console.log("CF RAW RESPONSE:", result);
+    // 🔒 NEVER trust external APIs
+    const raw = await cfResponse.text();
+    let result;
 
-    const aiResponse =
-      result?.result?.response || "Hello! How can I help you?";
+    try {
+      result = JSON.parse(raw);
+    } catch {
+      console.error("❌ Cloudflare non-JSON:", raw);
+      throw new Error("Cloudflare returned HTML");
+    }
 
-    // ---------------------------
-    // 2️⃣ SEND MESSAGE TO STREAM
-    // ---------------------------
-    console.log("Sending AI message to channel:", channel_id);
+    const aiText =
+      result?.result?.response || "Sorry, I couldn’t think of a reply.";
 
-    const channel = client.channel("messaging", channel_id, {
-      created_by_id: "ai-assistant",
-    });
-
-    await channel.watch();
-
+    // -------------------------
+    // 📤 Send AI message
+    // -------------------------
     await channel.sendMessage({
-      text: aiResponse,
-      user_id: "ai-assistant",
+      text: aiText,
+      user_id: AI_USER_ID,
     });
 
-    return res.json({ success: true, reply: aiResponse });
-  } catch (error) {
-    console.error("AI reply error:", error);
-    return res.status(500).json({ error: error.message });
+    // ⌨️ typing stop
+    await channel.sendEvent({
+      type: "typing.stop",
+      user_id: AI_USER_ID,
+    });
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("AI webhook error:", err);
+    return res.status(500).json({ error: "AI failed" });
   }
 });
 
