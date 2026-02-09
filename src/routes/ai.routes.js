@@ -67,8 +67,10 @@ router.post("/ai-reply", async (req, res) => {
 
     await channel.watch();
 
+    const reply = `AI says: ${message.text}`;
+
     await channel.sendMessage({
-      text: aiResponse,
+      text: reply,
       user_id: "ai-assistant",
     });
 
