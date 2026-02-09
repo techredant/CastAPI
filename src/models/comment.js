@@ -7,6 +7,7 @@ const replySchema = new Schema(
     userId: { type: String, required: true }, // Clerk ID
     userName: { type: String, required: true },
     text: { type: String, required: true },
+    image: { type: String }, // optional user image URL
     likes: { type: [String], default: [] }, // array of userIds who liked
     createdAt: { type: Date, default: Date.now },
   },
@@ -20,6 +21,7 @@ const commentSchema = new Schema(
     userId: { type: String, required: true }, // Clerk ID
     userName: { type: String, required: true },
     text: { type: String, required: true },
+    image: { type: String }, // optional user image URL
     likes: { type: [String], default: [] }, // array of userIds
     replies: { type: [replySchema], default: [] }, // embedded replies
   },

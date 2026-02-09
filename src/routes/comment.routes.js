@@ -19,7 +19,7 @@ router.post("/:id/comments", async (req, res) => {
       userId,
       userName: userName || "Anonymous",
       text,
-      image,
+      image: image,
       likes: [],
       createdAt: new Date(),
     });
