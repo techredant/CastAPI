@@ -1,47 +1,81 @@
-// routes/ai.routes.js
 const express = require("express");
 const router = express.Router();
 const { StreamChat } = require("stream-chat");
-const OpenAI = require("openai");
 
-// Stream client for sending messages as AI
+// Stream client
 const client = StreamChat.getInstance(
   process.env.STREAM_API_KEY,
-  process.env.STREAM_API_SECRET
+  process.env.STREAM_API_SECRET_KEY
 );
 
-// OpenAI client
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-router.post("/", async (req, res) => {
-  const { type, message, channel_id } = req.body;
-
-  if (type !== "message.new" || message?.user?.id === "ai-assistant") {
-    return res.status(200).json({ ok: true, ignored: true });
-  }
-
+// POST WEBHOOK FROM STREAM
+router.post("/ai-reply", async (req, res) => {
   try {
-    const channel = client.channel("messaging", channel_id);
-    await channel.watch();
+    const body = req.body;
+    const type = body.type;
+    const message = body.message;
+    const channel_id = body.channel?.id || body.channel_id;
 
-    // Generate AI reply
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
-      messages: [{ role: "user", content: message.text }],
+    console.log("Incoming webhook:", type);
+
+    // Ignore non-new messages
+    if (type !== "message.new") {
+      return res.json({ received: true });
+    }
+
+    // Prevent AI replying to itself
+    if (message?.user?.id === "ai-assistant") {
+      return res.json({ ignored: true });
+    }
+
+    // ---------------------------
+    // 1️⃣ CALL CLOUDFLARE AI
+    // ---------------------------
+    console.log("Calling Cloudflare AI...");
+
+    const cfResponse = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: "system", content: "You are a helpful AI assistant." },
+            { role: "user", content: message.text },
+          ],
+        }),
+      }
+    );
+
+    const result = await cfResponse.json();
+    console.log("CF RAW RESPONSE:", result);
+
+    const aiResponse =
+      result?.result?.response || "Hello! How can I help you?";
+
+    // ---------------------------
+    // 2️⃣ SEND MESSAGE TO STREAM
+    // ---------------------------
+    console.log("Sending AI message to channel:", channel_id);
+
+    const channel = client.channel("messaging", channel_id, {
+      created_by_id: "ai-assistant",
     });
 
-    const aiText = completion.choices[0].message.content;
+    await channel.watch();
 
-    // Send AI message
     await channel.sendMessage({
-      text: aiText,
+      text: aiResponse,
       user_id: "ai-assistant",
     });
 
-    return res.json({ success: true, reply: aiText });
-  } catch (err) {
-    console.error("AI reply error:", err);
-    return res.status(500).json({ error: "AI failed" });
+    return res.json({ success: true, reply: aiResponse });
+  } catch (error) {
+    console.error("AI reply error:", error);
+    return res.status(500).json({ error: error.message });
   }
 });
 
