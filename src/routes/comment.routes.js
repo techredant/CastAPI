@@ -5,7 +5,7 @@ const Post = require("../models/post");
 const router = express.Router();
 
 // ------------------- Create a Comment -------------------
-router.post("/", async (req, res) => {
+router.post("/:id/comments", async (req, res) => {
   try {
     const { postId, userId, userName, text } = req.body;
 

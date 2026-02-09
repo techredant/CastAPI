@@ -50,6 +50,8 @@ const upsertRoutes = require("./routes/upsertai.routes")
 
 const streamRoutes = require("./routes/stream.routes");
 
+const comentRoutes = require("./routes/comment.routes");
+
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/products", productRoutes);
@@ -59,6 +61,9 @@ app.use("/api/stream", streamRoutes);
 
 app.use("/api/upsertai",  upsertRoutes);
 app.use("/api/ai-reply", aiRoutes);
+
+app.use("/api/comments", comentRoutes);
+
 
 
 
