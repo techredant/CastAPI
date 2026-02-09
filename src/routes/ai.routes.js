@@ -31,10 +31,9 @@ async function getAIReply(text) {
 }
 
 router.post("/", async (req, res) => {
-  try {
-    const event = req.body;
+  const event = req.body;
 
-    // ✅ Only handle new user messages
+  try {
     if (
       event.type !== "message.new" ||
       !event.message?.text ||
@@ -50,15 +49,21 @@ router.post("/", async (req, res) => {
       event.channel_id
     );
 
-    // 🔵 Start typing
-    await channel.lastTypingEvent({ user_id: "ai-broad" });
+    // 👀 REQUIRED for bots
+    await channel.watch();
+
+    // ⌨️ typing start
+    await channel.sendEvent({
+      type: "typing.start",
+      user_id: "ai-broad",
+    });
 
     let aiReply;
     try {
       aiReply = await getAIReply(event.message.text);
-    } catch (aiErr) {
-      console.error("❌ OpenAI error:", aiErr);
-      aiReply = "⚠️ Sorry, I had trouble thinking just now.";
+    } catch (err) {
+      console.error("❌ OpenAI error:", err);
+      aiReply = "⚠️ Sorry, I had a brain freeze.";
     }
 
     await channel.sendMessage({
@@ -66,20 +71,16 @@ router.post("/", async (req, res) => {
       user_id: "ai-broad",
     });
 
+    // ⌨️ typing stop
+    await channel.sendEvent({
+      type: "typing.stop",
+      user_id: "ai-broad",
+    });
+
   } catch (err) {
     console.error("❌ AI webhook error:", err);
-  } finally {
-    // 🔵 Always stop typing
-    try {
-      const channel = serverClient.channel(
-        req.body.channel_type,
-        req.body.channel_id
-      );
-      await channel.lastTypingEvent({ user_id: "ai-broad" });
-    } catch {}
   }
 
-  // ⚠️ Always return 200 to Stream
   res.status(200).end();
 });
 
