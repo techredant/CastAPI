@@ -7,10 +7,10 @@ const router = express.Router();
 // ------------------- Create a Comment -------------------
 router.post("/:id/comments", async (req, res) => {
   try {
-    const { userId, userName, text } = req.body;
+    const { userId, userName, text, image } = req.body;
     const postId = req.params.id; // get from URL
 
-    if (!postId || !userId || !text) {
+    if (!postId || !userId || !text || !image) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -19,6 +19,8 @@ router.post("/:id/comments", async (req, res) => {
       userId,
       userName: userName || "Anonymous",
       text,
+      image,
+      likes: [],
       createdAt: new Date(),
     });
 
