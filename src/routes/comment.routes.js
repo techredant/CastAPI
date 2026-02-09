@@ -7,7 +7,8 @@ const router = express.Router();
 // ------------------- Create a Comment -------------------
 router.post("/:id/comments", async (req, res) => {
   try {
-    const { postId, userId, userName, text } = req.body;
+    const { userId, userName, text } = req.body;
+    const postId = req.params.id; // get from URL
 
     if (!postId || !userId || !text) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -21,7 +22,6 @@ router.post("/:id/comments", async (req, res) => {
       createdAt: new Date(),
     });
 
-    // Increment commentsCount in Post
     await Post.findByIdAndUpdate(postId, { $inc: { commentsCount: 1 } });
 
     res.status(201).json(newComment);
@@ -30,6 +30,7 @@ router.post("/:id/comments", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 // ------------------- Get all Comments for a Post -------------------
 router.get("/:postId", async (req, res) => {
