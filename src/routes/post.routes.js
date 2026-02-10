@@ -74,10 +74,10 @@ module.exports = (io) => {
 router.get("/:id", async (req, res) => {
   try {
     const { levelType, levelValue } = req.query;
-    const { id } = req.params;
+    const { id } = req.params; // this is the clerkId from frontend
 
-    // Base filter for non-deleted posts
-    const baseFilter = {
+    // Base filter: include only posts not deleted
+    const filter = {
       authorId: id,
       $or: [
         { isDeleted: { $exists: false } },
@@ -85,19 +85,17 @@ router.get("/:id", async (req, res) => {
       ],
     };
 
-    // DEBUG: count total posts for this user
+    // DEBUG logs
     const totalPosts = await Post.countDocuments({ authorId: id });
-    console.log(`🟢 Total posts for user ${id}:`, totalPosts);
+    console.log(`🟢 Total posts in DB for clerkId ${id}:`, totalPosts);
 
-    // HOME → just my posts
     if (levelType === "home") {
-      const posts = await Post.find(baseFilter).sort({ createdAt: -1 });
-
-      console.log(`🟢 Posts returned for HOME filter:`, posts.length);
+      const posts = await Post.find(filter).sort({ createdAt: -1 });
+      console.log(`🟢 Posts returned for HOME:`, posts.length);
       return res.status(200).json(posts);
     }
 
-    // --- hierarchy logic ---
+    // --- hierarchy logic for county/constituency/ward ---
     const getRelatedLevels = (levelType, levelValue) => {
       if (levelType === "county") {
         const county = kenyaData.counties.find(c => c.name === levelValue);
@@ -125,7 +123,7 @@ router.get("/:id", async (req, res) => {
     const relatedLevels = getRelatedLevels(levelType, levelValue);
 
     const posts = await Post.find({
-      ...baseFilter,
+      ...filter,
       levelValue: { $in: relatedLevels },
       levelType: { $ne: "home" },
     }).sort({ createdAt: -1 });
@@ -138,7 +136,6 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 
   // ✅ Create post
