@@ -213,65 +213,7 @@ router.get("/:id", async (req, res) => {
     }
   });
 
-//   // POST /posts/:id/recast
-//   // ✅ Clean single Recast Route
-  router.post("/:id/recast", async (req, res) => {
-    try {
-      console.log("📩 Recast request body:", req.body);
-      console.log("📩 Recast request params:", req.params);
 
-      const { id } = req.params;
-      const { userId, nickname, quoteText } = req.body;
-
-      if (!userId) {
-        return res.status(400).json({ message: "userId is required" });
-      }
-
-      const post = await Post.findById(id);
-      if (!post) {
-        return res.status(404).json({ message: "Post not found" });
-      }
-
-      // Ensure recasts array exists
-      if (!Array.isArray(post.recasts)) post.recasts = [];
-
-      // Find existing recast by same user (only matters for toggle)
-      const existingIndex = post.recasts.findIndex(
-        (r) => r.userId === userId && !r.quote
-      );
-
-      if (existingIndex >= 0 && !quoteText) {
-        // ✅ Toggle OFF (remove recast)
-        console.log("🔄 Removing existing recast");
-        post.recasts.splice(existingIndex, 1);
-      } else {
-        // ✅ Add new recast
-        console.log("➕ Adding new recast");
-        post.recasts.push({
-          userId,
-          nickname: nickname || "Anonymous",
-          quote: quoteText || "",
-          recastedAt: new Date(),
-        });
-      }
-
-      await post.save();
-
-      // Emit socket update so others see immediately
-      io.to(getRoomName(post.levelType, post.levelValue)).emit(
-        "updatePost",
-        post
-      );
-
-      console.log("✅ Recast processed successfully");
-      return res.status(200).json(post);
-    } catch (error) {
-      console.error("🔥 SERVER ERROR during recast:", error);
-      return res
-        .status(500)
-        .json({ message: "Server error", error: error.message });
-    }
-  });
 
 //   // ✅ Increment views
 router.post("/:id/view", async (req, res) => {
@@ -317,53 +259,105 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+  // router.put("/restore/:id", async (req, res) => {
+  //   try {
+  //     const post = await Post.findByIdAndUpdate(
+  //       req.params.id,
+  //       { isDeleted: false },
+  //       { new: true }
+  //     );
+  //     res.json(post);
+  //   } catch (err) {
+  //     res.status(500).json({ message: err.message });
+  //   }
+  // });
 
-
-  router.put("/restore/:id", async (req, res) => {
+//   // POST /posts/:id/recast
+//   // ✅ Clean single Recast Route
+  router.post("/:id/recast", async (req, res) => {
     try {
-      const post = await Post.findByIdAndUpdate(
-        req.params.id,
-        { isDeleted: false },
-        { new: true }
+      console.log("📩 Recast request body:", req.body);
+      console.log("📩 Recast request params:", req.params);
+
+      const { id } = req.params;
+      const { userId, nickname } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ message: "userId is required" });
+      }
+
+      const post = await Post.findById(id);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      // Ensure recasts array exists
+      if (!Array.isArray(post.recasts)) post.recasts = [];
+
+      // Find existing recast by same user (only matters for toggle)
+          const existingIndex = post.recasts.findIndex(
+          (r) => r.userId === userId && !r.quote
+        );
+
+
+if (existingIndex >= 0) {
+  post.recasts.splice(existingIndex, 1); // toggle off
+} else {
+  post.recasts.push({
+    userId,
+    nickname: nickname || "Anonymous",
+    recastedAt: new Date(),
+  });
+}
+
+      await post.save();
+
+      // Emit socket update so others see immediately
+      io.to(getRoomName(post.levelType, post.levelValue)).emit(
+        "updatePost",
+        post
       );
-      res.json(post);
-    } catch (err) {
-      res.status(500).json({ message: err.message });
+
+      console.log("✅ Recast processed successfully");
+      return res.status(200).json(post);
+    } catch (error) {
+      console.error("🔥 SERVER ERROR during recast:", error);
+      return res
+        .status(500)
+        .json({ message: "Server error", error: error.message });
     }
   });
 
+  // ✅ New simplified recite route (recast with optional quote)
+router.post("/:id/recite", async (req, res) => {
+  try {
+    const { userId, quoteText } = req.body;
+    const { id } = req.params;
 
-//   router.post("/:id/recast", async (req, res) => {
-//     try {
-//       const { userId, quoteText } = req.body;
-//       const { id } = req.params;
+    const post = await Post.findById(id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
 
-//       const post = await Post.findById(id);
-//       if (!post) return res.status(404).json({ message: "Post not found" });
+    // Check if already recasted (without quote)
+    const existingIndex = post.recasts.findIndex((r) => r.userId === userId);
 
-//       // ✅ Check if already recasted (without quote)
-//       const existingIndex = post.recasts.findIndex((r) => r.userId === userId);
+    if (existingIndex >= 0 && !quoteText) {
+      post.recasts.splice(existingIndex, 1); // toggle off
+    } else {
+      post.recasts.push({ userId, quoteText: quoteText || "" });
+    }
 
-//       if (existingIndex >= 0 && !quoteText) {
-//         // If already recasted, remove it (toggle behavior)
-//         post.recasts.splice(existingIndex, 1);
-//       } else {
-//         // Add a new recast
-//         post.recasts.push({ userId, quoteText: quoteText || "" });
-//       }
+    await post.save();
 
-//       await post.save();
+    const io = req.app.get("io");
+    io.emit("postUpdated", post);
 
-//       // Notify via socket.io
-//       const io = req.app.get("io");
-//       io.emit("postUpdated", post);
+    res.status(200).json(post);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error recasting post" });
+  }
+});
 
-//       res.status(200).json(post);
-//     } catch (err) {
-//       console.error(err);
-//       res.status(500).json({ message: "Error recasting post" });
-//     }
-//   });
 
   return router;
 };
