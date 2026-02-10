@@ -71,64 +71,65 @@ module.exports = (io) => {
     }
   });
 
-  router.get("/:id", async (req, res) => {
-    try {
-      const { levelType, levelValue, id } = req.query;
-        //  const { id } = req.params;
+ router.get("/:id", async (req, res) => {
+  try {
+    const { levelType, levelValue } = req.query;
+    const { id } = req.params; // ✅ correct
 
-      // ✅ Include posts with no isDeleted field or isDeleted = false
-      const filter = {authorId: id,
-        $or: [{ isDeleted: { $exists: false } }, { isDeleted: false }],
-      };
+    const baseFilter = {
+      authorId: id,
+      $or: [
+        { isDeleted: { $exists: false } },
+        { isDeleted: false },
+      ],
+    };
 
-      if (levelType === "home") {
-        const posts = await Post.find(filter).sort({ createdAt: -1 });
-        return res.status(200).json(posts);
+    // HOME → just my posts
+    if (levelType === "home") {
+      const posts = await Post.find(baseFilter).sort({ createdAt: -1 });
+      return res.status(200).json(posts);
+    }
+
+    // --- hierarchy logic ---
+    const getRelatedLevels = (levelType, levelValue) => {
+      if (levelType === "county") {
+        const county = kenyaData.counties.find(c => c.name === levelValue);
+        if (!county) return [];
+        return [
+          county.name,
+          ...county.constituencies.map(c => c.name),
+          ...county.constituencies.flatMap(c => c.wards.map(w => w.name)),
+        ];
       }
 
-      // --- Build hierarchy filter when not home ---
-      const getRelatedLevels = (levelType, levelValue) => {
-        if (levelType === "county") {
-          const county = kenyaData.counties.find((c) => c.name === levelValue);
-          if (!county) return [];
-          const constNames = county.constituencies.map((c) => c.name);
-          const wardNames = county.constituencies.flatMap((c) =>
-            c.wards.map((w) => w.name)
-          );
-          return [county.name, ...constNames, ...wardNames];
-        }
+      if (levelType === "constituency") {
+        const constituency = kenyaData.counties
+          .flatMap(c => c.constituencies)
+          .find(cs => cs.name === levelValue);
+        if (!constituency) return [];
+        return [constituency.name, ...constituency.wards.map(w => w.name)];
+      }
 
-        if (levelType === "constituency") {
-          const constituency = kenyaData.counties
-            .flatMap((c) => c.constituencies)
-            .find((cs) => cs.name === levelValue);
-          if (!constituency) return [];
-          const wardNames = constituency.wards.map((w) => w.name);
-          return [constituency.name, ...wardNames];
-        }
+      if (levelType === "ward") return [levelValue];
 
-        if (levelType === "ward") {
-          return [levelValue];
-        }
+      return [];
+    };
 
-        return [];
-      };
+    const relatedLevels = getRelatedLevels(levelType, levelValue);
 
-      const relatedLevels = getRelatedLevels(levelType, levelValue);
+    const posts = await Post.find({
+      ...baseFilter,
+      levelValue: { $in: relatedLevels },
+      levelType: { $ne: "home" },
+    }).sort({ createdAt: -1 });
 
-      // ✅ Apply soft-delete filter + hierarchy filter
-      const posts = await Post.find({
-        ...filter,
-        levelValue: { $in: relatedLevels },
-        levelType: { $ne: "home" },
-      }).sort({ createdAt: -1 });
+    res.status(200).json(posts);
+  } catch (err) {
+    console.error("❌ Error fetching posts:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
-      res.status(200).json(posts);
-    } catch (err) {
-      console.error("❌ Error fetching posts:", err);
-      res.status(500).json({ message: "Server error" });
-    }
-  });
 
   // ✅ Create post
   router.post("/", async (req, res) => {
