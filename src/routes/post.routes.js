@@ -71,11 +71,12 @@ module.exports = (io) => {
     }
   });
 
- router.get("/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const { levelType, levelValue } = req.query;
-    const { id } = req.params; // ✅ correct
+    const { id } = req.params;
 
+    // Base filter for non-deleted posts
     const baseFilter = {
       authorId: id,
       $or: [
@@ -84,9 +85,15 @@ module.exports = (io) => {
       ],
     };
 
+    // DEBUG: count total posts for this user
+    const totalPosts = await Post.countDocuments({ authorId: id });
+    console.log(`🟢 Total posts for user ${id}:`, totalPosts);
+
     // HOME → just my posts
     if (levelType === "home") {
       const posts = await Post.find(baseFilter).sort({ createdAt: -1 });
+
+      console.log(`🟢 Posts returned for HOME filter:`, posts.length);
       return res.status(200).json(posts);
     }
 
@@ -123,12 +130,15 @@ module.exports = (io) => {
       levelType: { $ne: "home" },
     }).sort({ createdAt: -1 });
 
+    console.log(`🟢 Posts returned for ${levelType}:`, posts.length);
+
     res.status(200).json(posts);
   } catch (err) {
     console.error("❌ Error fetching posts:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 
   // ✅ Create post
