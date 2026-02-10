@@ -331,7 +331,7 @@ if (existingIndex >= 0) {
   // ✅ New simplified recite route (recast with optional quote)
 router.post("/:id/recite", async (req, res) => {
   try {
-    const { userId, quoteText } = req.body;
+    const { userId, quoteText, nickname } = req.body;
     const { id } = req.params;
 
     if (!userId) return res.status(400).json({ message: "userId is required" });
@@ -340,18 +340,19 @@ router.post("/:id/recite", async (req, res) => {
     if (!post) return res.status(404).json({ message: "Post not found" });
 
     // ✅ Ensure recasts array exists
-    if (!Array.isArray(post.recasts)) post.recasts = [];
+    if (!Array.isArray(post.recite)) post.recite = [];
 
     // Check if already recasted by this user (toggle if no quote)
-    const existingIndex = post.recasts.findIndex(
+    const existingIndex = post.recite.findIndex(
       (r) => r.userId === userId && !r.quote
     );
 
     if (existingIndex >= 0 && !quoteText) {
-      post.recasts.splice(existingIndex, 1);
+      post.recite.splice(existingIndex, 1);
     } else {
-      post.recasts.push({
+      post.recite.push({
         userId,
+        nickname: nickname || "Anonymous",
         quote: quoteText || "",
         recastedAt: new Date(),
       });
