@@ -83,7 +83,7 @@ router.get("/", async (req, res) => {
         case "home":
           // Home: show only county-level posts
           return {
-            levelTypes: ["county"],
+            levelTypes: ["home", "county"],
             levelValues: null, // null means all counties
           };
 
