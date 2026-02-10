@@ -334,16 +334,27 @@ router.post("/:id/recite", async (req, res) => {
     const { userId, quoteText } = req.body;
     const { id } = req.params;
 
+    if (!userId) return res.status(400).json({ message: "userId is required" });
+
     const post = await Post.findById(id);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    // Check if already recasted (without quote)
-    const existingIndex = post.recasts.findIndex((r) => r.userId === userId);
+    // ✅ Ensure recasts array exists
+    if (!Array.isArray(post.recasts)) post.recasts = [];
+
+    // Check if already recasted by this user (toggle if no quote)
+    const existingIndex = post.recasts.findIndex(
+      (r) => r.userId === userId && !r.quote
+    );
 
     if (existingIndex >= 0 && !quoteText) {
-      post.recasts.splice(existingIndex, 1); // toggle off
+      post.recasts.splice(existingIndex, 1);
     } else {
-      post.recasts.push({ userId, quoteText: quoteText || "" });
+      post.recasts.push({
+        userId,
+        quote: quoteText || "",
+        recastedAt: new Date(),
+      });
     }
 
     await post.save();
@@ -353,10 +364,11 @@ router.post("/:id/recite", async (req, res) => {
 
     res.status(200).json(post);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error recasting post" });
+    console.error("🔥 /recite error:", err);
+    res.status(500).json({ message: "Error reciting post", error: err.message });
   }
 });
+
 
 
   return router;
