@@ -13,63 +13,130 @@ module.exports = (io) => {
   const kenyaData = require("../assets/iebc.json"); // adjust path if needed
 
 
-  router.get("/", async (req, res) => {
-    try {
-      const { levelType, levelValue } = req.query;
+  // router.get("/", async (req, res) => {
+  //   try {
+  //     const { levelType, levelValue } = req.query;
 
-      // ✅ Include posts with no isDeleted field or isDeleted = false
-      const filter = {
-        $or: [{ isDeleted: { $exists: false } }, { isDeleted: false }],
-      };
+  //     // ✅ Include posts with no isDeleted field or isDeleted = false
+  //     const filter = {
+  //       $or: [{ isDeleted: { $exists: false } }, { isDeleted: false }],
+  //     };
 
-      if (levelType === "home") {
-        const posts = await Post.find(filter).sort({ createdAt: -1 });
-        return res.status(200).json(posts);
-      }
+  //     if (levelType === "home") {
+  //       const posts = await Post.find(filter).sort({ createdAt: -1 });
+  //       return res.status(200).json(posts);
+  //     }
 
-      // --- Build hierarchy filter when not home ---
-      const getRelatedLevels = (levelType, levelValue) => {
-        if (levelType === "county") {
+  //     // --- Build hierarchy filter when not home ---
+  //     const getRelatedLevels = (levelType, levelValue) => {
+  //       if (levelType === "county") {
+  //         const county = kenyaData.counties.find((c) => c.name === levelValue);
+  //         if (!county) return [];
+  //         const constNames = county.constituencies.map((c) => c.name);
+  //         const wardNames = county.constituencies.flatMap((c) =>
+  //           c.wards.map((w) => w.name)
+  //         );
+  //         return [county.name, ...constNames, ...wardNames];
+  //       }
+
+  //       if (levelType === "constituency") {
+  //         const constituency = kenyaData.counties
+  //           .flatMap((c) => c.constituencies)
+  //           .find((cs) => cs.name === levelValue);
+  //         if (!constituency) return [];
+  //         const wardNames = constituency.wards.map((w) => w.name);
+  //         return [constituency.name, ...wardNames];
+  //       }
+
+  //       if (levelType === "ward") {
+  //         return [levelValue];
+  //       }
+
+  //       return [];
+  //     };
+
+  //     const relatedLevels = getRelatedLevels(levelType, levelValue);
+
+  //     // ✅ Apply soft-delete filter + hierarchy filter
+  //     const posts = await Post.find({
+  //       ...filter,
+  //       levelValue: { $in: relatedLevels },
+  //       levelType: { $ne: "home" },
+  //     }).sort({ createdAt: -1 });
+
+  //     res.status(200).json(posts);
+  //   } catch (err) {
+  //     console.error("❌ Error fetching posts:", err);
+  //     res.status(500).json({ message: "Server error" });
+  //   }
+  // });
+
+router.get("/", async (req, res) => {
+  try {
+    const { levelType, levelValue } = req.query;
+
+    // ✅ Include posts that are not deleted
+    const filter = { $or: [{ isDeleted: { $exists: false } }, { isDeleted: false }] };
+
+    const getRelatedLevels = (levelType, levelValue) => {
+      switch (levelType) {
+        case "home":
+          // Home: show only county-level posts
+          return {
+            levelTypes: ["county"],
+            levelValues: null, // null means all counties
+          };
+
+        case "county":
+          // County: show county + constituencies
           const county = kenyaData.counties.find((c) => c.name === levelValue);
-          if (!county) return [];
-          const constNames = county.constituencies.map((c) => c.name);
-          const wardNames = county.constituencies.flatMap((c) =>
-            c.wards.map((w) => w.name)
-          );
-          return [county.name, ...constNames, ...wardNames];
-        }
+          if (!county) return { levelTypes: [], levelValues: [] };
+          const constituencyNames = county.constituencies.map((c) => c.name);
+          return {
+            levelTypes: ["county", "constituency"],
+            levelValues: [county.name, ...constituencyNames],
+          };
 
-        if (levelType === "constituency") {
+        case "constituency":
+          // Constituency: show constituency + wards
           const constituency = kenyaData.counties
             .flatMap((c) => c.constituencies)
             .find((cs) => cs.name === levelValue);
-          if (!constituency) return [];
+          if (!constituency) return { levelTypes: [], levelValues: [] };
           const wardNames = constituency.wards.map((w) => w.name);
-          return [constituency.name, ...wardNames];
-        }
+          return {
+            levelTypes: ["constituency", "ward"],
+            levelValues: [constituency.name, ...wardNames],
+          };
 
-        if (levelType === "ward") {
-          return [levelValue];
-        }
+        case "ward":
+          return { levelTypes: ["ward"], levelValues: [levelValue] };
 
-        return [];
-      };
+        default:
+          return { levelTypes: [], levelValues: [] };
+      }
+    };
 
-      const relatedLevels = getRelatedLevels(levelType, levelValue);
+    const { levelTypes, levelValues } = getRelatedLevels(levelType, levelValue);
 
-      // ✅ Apply soft-delete filter + hierarchy filter
-      const posts = await Post.find({
-        ...filter,
-        levelValue: { $in: relatedLevels },
-        levelType: { $ne: "home" },
-      }).sort({ createdAt: -1 });
+    // Build query dynamically
+    const query = {
+      ...filter,
+      levelType: { $in: levelTypes },
+    };
 
-      res.status(200).json(posts);
-    } catch (err) {
-      console.error("❌ Error fetching posts:", err);
-      res.status(500).json({ message: "Server error" });
+    if (levelValues) {
+      query.levelValue = { $in: levelValues };
     }
-  });
+
+    const posts = await Post.find(query).sort({ createdAt: -1 });
+    res.status(200).json(posts);
+  } catch (err) {
+    console.error("❌ Error fetching posts:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 
 router.get("/:id", async (req, res) => {
   try {
