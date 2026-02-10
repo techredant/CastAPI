@@ -13,64 +13,6 @@ module.exports = (io) => {
   const kenyaData = require("../assets/iebc.json"); // adjust path if needed
 
 
-  // router.get("/", async (req, res) => {
-  //   try {
-  //     const { levelType, levelValue } = req.query;
-
-  //     // ✅ Include posts with no isDeleted field or isDeleted = false
-  //     const filter = {
-  //       $or: [{ isDeleted: { $exists: false } }, { isDeleted: false }],
-  //     };
-
-  //     if (levelType === "home") {
-  //       const posts = await Post.find(filter).sort({ createdAt: -1 });
-  //       return res.status(200).json(posts);
-  //     }
-
-  //     // --- Build hierarchy filter when not home ---
-  //     const getRelatedLevels = (levelType, levelValue) => {
-  //       if (levelType === "county") {
-  //         const county = kenyaData.counties.find((c) => c.name === levelValue);
-  //         if (!county) return [];
-  //         const constNames = county.constituencies.map((c) => c.name);
-  //         const wardNames = county.constituencies.flatMap((c) =>
-  //           c.wards.map((w) => w.name)
-  //         );
-  //         return [county.name, ...constNames, ...wardNames];
-  //       }
-
-  //       if (levelType === "constituency") {
-  //         const constituency = kenyaData.counties
-  //           .flatMap((c) => c.constituencies)
-  //           .find((cs) => cs.name === levelValue);
-  //         if (!constituency) return [];
-  //         const wardNames = constituency.wards.map((w) => w.name);
-  //         return [constituency.name, ...wardNames];
-  //       }
-
-  //       if (levelType === "ward") {
-  //         return [levelValue];
-  //       }
-
-  //       return [];
-  //     };
-
-  //     const relatedLevels = getRelatedLevels(levelType, levelValue);
-
-  //     // ✅ Apply soft-delete filter + hierarchy filter
-  //     const posts = await Post.find({
-  //       ...filter,
-  //       levelValue: { $in: relatedLevels },
-  //       levelType: { $ne: "home" },
-  //     }).sort({ createdAt: -1 });
-
-  //     res.status(200).json(posts);
-  //   } catch (err) {
-  //     console.error("❌ Error fetching posts:", err);
-  //     res.status(500).json({ message: "Server error" });
-  //   }
-  // });
-
 router.get("/", async (req, res) => {
   try {
     const { levelType, levelValue } = req.query;
@@ -377,18 +319,18 @@ router.delete("/:id", async (req, res) => {
 
 
 
-//   router.put("/restore/:id", async (req, res) => {
-//     try {
-//       const post = await Post.findByIdAndUpdate(
-//         req.params.id,
-//         { isDeleted: false },
-//         { new: true }
-//       );
-//       res.json(post);
-//     } catch (err) {
-//       res.status(500).json({ message: err.message });
-//     }
-//   });
+  router.put("/restore/:id", async (req, res) => {
+    try {
+      const post = await Post.findByIdAndUpdate(
+        req.params.id,
+        { isDeleted: false },
+        { new: true }
+      );
+      res.json(post);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  });
 
 
 //   router.post("/:id/recast", async (req, res) => {
