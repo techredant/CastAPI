@@ -340,17 +340,17 @@ router.post("/:id/recite", async (req, res) => {
     if (!post) return res.status(404).json({ message: "Post not found" });
 
     // ✅ Ensure recasts array exists
-    if (!Array.isArray(post.recite)) post.recite = [];
+    if (!Array.isArray(post.recites)) post.recites = [];
 
     // Check if already recasted by this user (toggle if no quote)
-    const existingIndex = post.recite.findIndex(
+    const existingIndex = post.recites.findIndex(
       (r) => r.userId === userId && !r.quote
     );
 
     if (existingIndex >= 0 && !quoteText) {
-      post.recite.splice(existingIndex, 1);
+      post.recites.splice(existingIndex, 1);
     } else {
-      post.recite.push({
+      post.recites.push({
         userId,
         nickname: nickname || "Anonymous",
         quote: quoteText || "",

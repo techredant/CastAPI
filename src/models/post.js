@@ -10,7 +10,7 @@ const postSchema = new mongoose.Schema(
     linkPreview: Object,
     likes: { type: [String], default: [] },
     isDeleted: { type: Boolean, default: false },
-    recasts: [
+    recites: [
       {
         userId: { type: String, required: true },
         nickname: { type: String, required: true },
