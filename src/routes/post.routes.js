@@ -12,6 +12,45 @@ module.exports = (io) => {
   // ✅ Get posts
   const kenyaData = require("../assets/iebc.json"); // adjust path if needed
 
+    // ✅ Create post
+  router.post("/", async (req, res) => {
+    try {
+      const { userId, caption, media, levelType, levelValue, linkPreview } =
+        req.body;
+
+      const user = await User.findOne({ clerkId: userId });
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const newPost = new Post({
+        userId,
+        caption,
+        media,
+        levelType,
+        levelValue,
+        quote,
+          type,
+        linkPreview: linkPreview || null,
+        user: {
+          clerkId: user.clerkId,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          nickName: user.nickName,
+          image: user.image,
+        },
+      });
+
+      await newPost.save();
+
+      const room = getRoomName(levelType, levelValue);
+      io.to(room).emit("newPost", newPost);
+
+      res.status(201).json(newPost);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
 
 router.get("/", async (req, res) => {
   try {
@@ -147,42 +186,6 @@ router.get("/:id", async (req, res) => {
 });
 
 
-  // ✅ Create post
-  router.post("/", async (req, res) => {
-    try {
-      const { userId, caption, media, levelType, levelValue, linkPreview } =
-        req.body;
-
-      const user = await User.findOne({ clerkId: userId });
-      if (!user) return res.status(404).json({ message: "User not found" });
-
-      const newPost = new Post({
-        userId,
-        caption,
-        media,
-        levelType,
-        levelValue,
-        linkPreview: linkPreview || null,
-        user: {
-          clerkId: user.clerkId,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          nickName: user.nickName,
-          image: user.image,
-        },
-      });
-
-      await newPost.save();
-
-      const room = getRoomName(levelType, levelValue);
-      io.to(room).emit("newPost", newPost);
-
-      res.status(201).json(newPost);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server error" });
-    }
-  });
 
   // ✅ Like / Unlike
   router.post("/:id/like", async (req, res) => {
