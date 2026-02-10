@@ -365,9 +365,11 @@ router.post("/:id/recite", async (req, res) => {
 
     res.status(200).json(post);
   } catch (err) {
-    console.error("🔥 /recite error:", err);
-    res.status(500).json({ message: "Error reciting post", error: err.message });
-  }
+  console.error("🔥 /recite error:", err);
+  console.error(err.stack); // very useful
+  res.status(500).json({ message: "Error reciting post", error: err.message });
+}
+
 });
 
 
