@@ -13,9 +13,15 @@ module.exports = (io) => {
   const kenyaData = require("../assets/iebc.json"); // adjust path if needed
 
     // ✅ Create post
-  router.post("/", async (req, res) => {
+router.post("/", async (req, res) => {
   try {
-    const { userId, caption, media, levelType, levelValue, linkPreview, quote, type,   originalPostId } = req.body;
+    const {
+      userId,
+      caption,
+      quote,
+      originalPostId,
+      type
+    } = req.body;
 
     const user = await User.findOne({ clerkId: userId });
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -23,13 +29,9 @@ module.exports = (io) => {
     const newPost = new Post({
       userId,
       caption,
-      media,
-      levelType,
-      levelValue,
       quote,
-      type,
       originalPostId: originalPostId || null,
-      linkPreview: linkPreview || null,
+      type,
       user: {
         clerkId: user.clerkId,
         firstName: user.firstName,
@@ -39,14 +41,15 @@ module.exports = (io) => {
       },
     });
 
-
     await newPost.save();
 
+    // Populate original post before sending
+    const populatedPost = await Post.findById(newPost._id)
+      .populate("originalPostId");
 
-    const room = getRoomName(levelType, levelValue);
-    io.to(room).emit("newPost", newPost);
+    io.emit("newPost", populatedPost);
 
-    res.status(201).json(newPost);
+    res.status(201).json(populatedPost);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
