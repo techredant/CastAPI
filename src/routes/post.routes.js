@@ -15,7 +15,7 @@ module.exports = (io) => {
     // ✅ Create post
   router.post("/", async (req, res) => {
   try {
-    const { userId, caption, media, levelType, levelValue, linkPreview, quote, type } = req.body;
+    const { userId, caption, media, levelType, levelValue, linkPreview, quote, type,   originalPostId } = req.body;
 
     const user = await User.findOne({ clerkId: userId });
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -28,6 +28,7 @@ module.exports = (io) => {
       levelValue,
       quote,
       type,
+      originalPostId: originalPostId || null,
       linkPreview: linkPreview || null,
       user: {
         clerkId: user.clerkId,
@@ -38,7 +39,13 @@ module.exports = (io) => {
       },
     });
 
+
     await newPost.save();
+
+    const quoteCount = await Post.countDocuments({
+  originalPostId: postId,
+  quote: { $exists: true, $ne: null }
+});
 
     const room = getRoomName(levelType, levelValue);
     io.to(room).emit("newPost", newPost);
@@ -110,7 +117,23 @@ router.get("/", async (req, res) => {
     }
 
     const posts = await Post.find(query).sort({ createdAt: -1 });
-    res.status(200).json(posts);
+
+const postsWithCounts = await Promise.all(
+  posts.map(async (post) => {
+    const quoteCount = await Post.countDocuments({
+      originalPostId: post._id,
+      quote: { $exists: true, $ne: null },
+    });
+
+    return {
+      ...post.toObject(),
+      quoteCount,
+    };
+  })
+);
+
+res.status(200).json(postsWithCounts);
+
   } catch (err) {
     console.error("❌ Error fetching posts:", err);
     res.status(500).json({ message: "Server error" });
