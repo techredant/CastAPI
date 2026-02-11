@@ -1,6 +1,6 @@
 const express = require("express");
-const Recite = require("../models/recite"); // Recite schema
-const Post = require("../models/post");     // Original posts
+const Recite = require("../models/recite");
+const Post = require("../models/post");
 const User = require("../models/user");
 
 module.exports = (io) => {
@@ -9,113 +9,157 @@ module.exports = (io) => {
   const getRoomName = (levelType, levelValue) =>
     `level-${levelType}-${levelValue || "all"}`;
 
-  const kenyaData = require("../assets/iebc.json"); // for levels if needed
-
-  // -----------------------
+  // =========================
   // CREATE RECITE
-  // -----------------------
- router.post("/", async (req, res) => {
-  try {
-    const {
-      userId,
-      quote,
-      caption,
-      originalPostId,
-      linkPreview,
-      reciteFirstName,
-      reciteLastName,
-      reciteNickName,
-      reciteImage,
-      reciteMedia,
-    } = req.body;
+  // =========================
+  router.post("/", async (req, res) => {
+    try {
+      const {
+        userId,
+        quote,
+        caption,
+        originalPostId,
+        linkPreview,
+      } = req.body;
 
-    if (!originalPostId) {
-      return res.status(400).json({ message: "originalPostId is required" });
+      if (!originalPostId) {
+        return res.status(400).json({
+          message: "originalPostId is required",
+        });
+      }
+
+      // Find user
+      const user = await User.findOne({ clerkId: userId });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Find original post
+      const originalPost = await Post.findById(originalPostId);
+      if (!originalPost) {
+        return res.status(404).json({
+          message: "Original post not found",
+        });
+      }
+
+      // Prevent duplicate recites
+      const existing = await Recite.findOne({
+        userId,
+        originalPostId,
+      });
+
+      if (existing) {
+        return res.status(400).json({
+          message: "You already recited this post",
+        });
+      }
+
+      // Create recite
+      const newRecite = new Recite({
+        userId,
+        caption,
+        quote: quote || null,
+        originalPostId,
+        linkPreview: linkPreview || null,
+
+        // Inherit level from original post
+        levelType: originalPost.levelType,
+        levelValue: originalPost.levelValue,
+
+        // Save recited post info
+        reciteMedia: originalPost.media,
+
+        // Save original post creator info
+        reciteFirstName: originalPost.user.firstName,
+        reciteLastName: originalPost.user.lastName,
+        reciteNickName: originalPost.user.nickName,
+        reciteImage: originalPost.user.image,
+
+        // Current user info
+        user: {
+          clerkId: user.clerkId,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          nickName: user.nickName,
+          image: user.image,
+        },
+      });
+
+      await newRecite.save();
+
+      // Emit to correct level room
+      const room = getRoomName(
+        originalPost.levelType,
+        originalPost.levelValue
+      );
+
+      io.to(room).emit("newRecite", newRecite);
+
+      return res.status(201).json(newRecite);
+
+    } catch (err) {
+      console.error("❌ Error creating recite:", err);
+      return res.status(500).json({
+        message: "Server error",
+      });
     }
+  });
 
-    const user = await User.findOne({ clerkId: userId });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const originalPost = await Post.findById(originalPostId);
-    if (!originalPost)
-      return res.status(404).json({ message: "Original post not found" });
-
-    const newRecite = new Recite({
-      userId,
-      reciteFirstName,
-      reciteLastName,
-      reciteNickName,
-      reciteImage,
-      caption,
-      reciteMedia,
-      quote,
-      originalPostId,
-      linkPreview: linkPreview || null,
-      levelType: originalPost.levelType,
-      levelValue: originalPost.levelValue,
-      user: {
-        clerkId: user.clerkId,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        nickName: user.nickName,
-        image: user.image,
-      },
-    });
-
-    await newRecite.save();
-
-    const room = getRoomName(
-      originalPost.levelType,
-      originalPost.levelValue
-    );
-
-    io.to(room).emit("newRecite", newRecite);
-
-    return res.status(201).json(newRecite);
-
-  } catch (err) {
-    console.error("❌ Error creating recite:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-
-  // -----------------------
+  // =========================
   // GET RECITES
-  // -----------------------
+  // =========================
   router.get("/", async (req, res) => {
     try {
       const { levelType, levelValue } = req.query;
 
-      // Include non-deleted recites
-      const filter = { $or: [{ isDeleted: { $exists: false } }, { isDeleted: false }] };
+      const filter = {
+        $or: [
+          { isDeleted: { $exists: false } },
+          { isDeleted: false },
+        ],
+      };
 
-      // Build query based on levels
-      const query = { ...filter };
-      if (levelType) query.levelType = levelType;
-      if (levelValue) query.levelValue = levelValue;
+      if (levelType) filter.levelType = levelType;
+      if (levelValue) filter.levelValue = levelValue;
 
-      const recites = await Recite.find(query).sort({ createdAt: -1 });
+      const recites = await Recite.find(filter)
+        .sort({ createdAt: -1 });
 
-      // Count how many times each original post has been recited
-      const recitesWithCounts = await Promise.all(
-        recites.map(async (recite) => {
-          const quoteCount = await Recite.countDocuments({
-            originalPostId: recite.originalPostId,
-            quote: { $exists: true, $ne: null },
-          });
+      // Aggregate counts in ONE query
+      const counts = await Recite.aggregate([
+        {
+          $match: {
+            originalPostId: {
+              $in: recites.map(r => r.originalPostId),
+            },
+          },
+        },
+        {
+          $group: {
+            _id: "$originalPostId",
+            count: { $sum: 1 },
+          },
+        },
+      ]);
 
-          return {
-            ...recite.toObject(),
-            quoteCount,
-          };
-        })
-      );
+      const countMap = {};
+      counts.forEach(c => {
+        countMap[c._id.toString()] = c.count;
+      });
 
-      res.status(200).json(recitesWithCounts);
+      const recitesWithCounts = recites.map(recite => ({
+        ...recite.toObject(),
+        quoteCount:
+          countMap[recite.originalPostId?.toString()] || 0,
+      }));
+
+      return res.status(200).json(recitesWithCounts);
+
     } catch (err) {
       console.error("❌ Error fetching recites:", err);
-      res.status(500).json({ message: "Server error" });
+      return res.status(500).json({
+        message: "Server error",
+      });
     }
   });
 

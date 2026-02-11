@@ -52,7 +52,7 @@ const upsertRoutes = require("./routes/upsertai.routes")
 const streamRoutes = require("./routes/stream.routes");
 
 const comentRoutes = require("./routes/comment.routes");
-const recastRoutes = require("./routes/recast.routes");
+const recastRoutes = require("./routes/recast.routes")(io);
 
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
