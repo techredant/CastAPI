@@ -14,67 +14,71 @@ module.exports = (io) => {
   // -----------------------
   // CREATE RECITE
   // -----------------------
-  router.post("/", async (req, res) => {
-    try {
-      const { userId, quote, caption, type, originalPostId, linkPreview, reciteFirstName, reciteLastName, reciteNickName, reciteImage, reciteMedia } = req.body;
+ router.post("/", async (req, res) => {
+  try {
+    const {
+      userId,
+      quote,
+      caption,
+      originalPostId,
+      linkPreview,
+      reciteFirstName,
+      reciteLastName,
+      reciteNickName,
+      reciteImage,
+      reciteMedia,
+    } = req.body;
 
-      if (!originalPostId) {
-        return res.status(400).json({ message: "originalPostId is required" });
-      }
-
-      // 1️⃣ Get user
-      const user = await User.findOne({ clerkId: userId });
-      if (!user) return res.status(404).json({ message: "User not found" });
-
-      // 2️⃣ Get original post (to inherit level info)
-      const originalPost = await Post.findById(originalPostId);
-      if (!originalPost) return res.status(404).json({ message: "Original post not found" });
-
-      // 3️⃣ Create recite
-      const newRecite = new Recite({
-        userId,
-        reciteFirstName,
-        reciteLastName,
-        reciteNickName,
-        reciteImage,
-        caption,
-        reciteMedia,
-        quote,
-        type: type || "recite",
-        originalPostId,
-        linkPreview: linkPreview || null,
-        levelType: originalPost.levelType,
-        levelValue: originalPost.levelValue,
-        user: {
-          clerkId: user.clerkId,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          nickName: user.nickName,
-          image: user.image,
-        },
-      });
-
-      await newRecite.save();
-
-      // 4️⃣ Emit to the room based on level
-      const room = getRoomName(originalPost.levelType, originalPost.levelValue);
-      io.to(room).emit("newRecite", newRecite);
-
-      const recite = await Recite.create(req.body);
-
-// ✅ Increment the quoteCount on the original post
-if (recite.originalPostId) {
-  await Post.findByIdAndUpdate(
-    recite.originalPostId,
-    { $inc: { quoteCount: 1 } },
-    { new: true }
-  );
-}
-    } catch (err) {
-      console.error("❌ Error creating recite:", err);
-      res.status(500).json({ message: "Server error" });
+    if (!originalPostId) {
+      return res.status(400).json({ message: "originalPostId is required" });
     }
-  });
+
+    const user = await User.findOne({ clerkId: userId });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const originalPost = await Post.findById(originalPostId);
+    if (!originalPost)
+      return res.status(404).json({ message: "Original post not found" });
+
+    const newRecite = new Recite({
+      userId,
+      reciteFirstName,
+      reciteLastName,
+      reciteNickName,
+      reciteImage,
+      caption,
+      reciteMedia,
+      quote,
+      originalPostId,
+      linkPreview: linkPreview || null,
+      levelType: originalPost.levelType,
+      levelValue: originalPost.levelValue,
+      user: {
+        clerkId: user.clerkId,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        nickName: user.nickName,
+        image: user.image,
+      },
+    });
+
+    await newRecite.save();
+
+    const room = getRoomName(
+      originalPost.levelType,
+      originalPost.levelValue
+    );
+
+    io.to(room).emit("newRecite", newRecite);
+
+    return res.status(201).json(newRecite);
+
+  } catch (err) {
+    console.error("❌ Error creating recite:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 
   // -----------------------
   // GET RECITES
