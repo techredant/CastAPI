@@ -11,6 +11,7 @@ const postSchema = new mongoose.Schema(
     likes: { type: [String], default: [] },
     isDeleted: { type: Boolean, default: false },
      quote: { type: String, default: "" },
+      originalPostId: { type: mongoose.Schema.Types.ObjectId, ref: "Post", default: null },
     recites: [
       {
         userId: { type: String, required: true },
