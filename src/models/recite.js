@@ -4,7 +4,7 @@ const reciteSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true },
     caption: String,
-    media: [String],
+    reciteMedia: [String],
     reciteFirstName: String,
     reciteLastName: String,
     reciteNickName: String,

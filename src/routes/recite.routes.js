@@ -16,7 +16,7 @@ module.exports = (io) => {
   // -----------------------
   router.post("/", async (req, res) => {
     try {
-      const { userId, quote, caption, type, originalPostId, linkPreview, reciteFirstName, reciteLastName, reciteNickName, reciteImage, media } = req.body;
+      const { userId, quote, caption, type, originalPostId, linkPreview, reciteFirstName, reciteLastName, reciteNickName, reciteImage, reciteMedia } = req.body;
 
       if (!originalPostId) {
         return res.status(400).json({ message: "originalPostId is required" });
@@ -38,7 +38,7 @@ module.exports = (io) => {
         reciteNickName,
         reciteImage,
         caption,
-        media,
+        reciteMedia,
         quote,
         type: type || "recite",
         originalPostId,
