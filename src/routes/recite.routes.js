@@ -1,5 +1,5 @@
 const express = require("express");
-const Post = require("../models/post");
+const Post = require("../models/recite");
 const User = require("../models/user");
 
 module.exports = (io) => {
@@ -14,7 +14,7 @@ module.exports = (io) => {
     // ✅ Create post
   router.post("/", async (req, res) => {
   try {
-    const { userId, caption, media, levelType, levelValue, linkPreview, quote, type,   originalPostId } = req.body;
+    const { userId, caption, media, levelType, levelValue, linkPreview, quote, type, originalPostId } = req.body;
 
     const user = await User.findOne({ clerkId: userId });
     if (!user) return res.status(404).json({ message: "User not found" });
