@@ -12,6 +12,8 @@ const postSchema = new mongoose.Schema(
     likes: { type: [String], default: [] },
     isDeleted: { type: Boolean, default: false },
     views: { type: Number, default: 0 },
+    recastCount: { type: Number, default: 0 },
+    reciteCount: { type: Number, default: 0 },
     commentsCount: { type: Number, default: 0 },
     user: {
       clerkId: String,
