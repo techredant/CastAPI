@@ -55,7 +55,7 @@ const comentRoutes = require("./routes/comment.routes");
 
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
-app.use("/api/recite", reciteRoutes);
+app.use("/api/recites", reciteRoutes);
 
 app.use("/api/products", productRoutes);
 // app.use("/api/news", newsRoutes);
