@@ -251,7 +251,7 @@ router.post("/:id/recastCount", async (req, res) => {
   try {
     const post = await Post.findByIdAndUpdate(
       req.params.id,
-      { $inc: { views: 1 } },
+      { $inc: { recastCount: 1 } },
       { new: true }
     );
     res.json(post);
@@ -264,7 +264,7 @@ router.post("/:id/reciteCount", async (req, res) => {
   try {
     const post = await Post.findByIdAndUpdate(
       req.params.id,
-      { $inc: { views: 1 } },
+      { $inc: { reciteCount: 1 } },
       { new: true }
     );
     res.json(post);
