@@ -42,10 +42,6 @@ module.exports = (io) => {
 
     await newPost.save();
 
-    const quoteCount = await Post.countDocuments({
-  originalPostId: postId,
-  quote: { $exists: true, $ne: null }
-});
 
     const room = getRoomName(levelType, levelValue);
     io.to(room).emit("newPost", newPost);

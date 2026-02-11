@@ -12,13 +12,6 @@ const postSchema = new mongoose.Schema(
     isDeleted: { type: Boolean, default: false },
      quote: { type: String, default: "" },
       originalPostId: { type: mongoose.Schema.Types.ObjectId, ref: "Post", default: null },
-    recites: [
-      {
-        userId: { type: String, required: true },
-        nickname: { type: String, required: true },
-        recastedAt: { type: Date, default: Date.now },
-      },
-    ],
     views: { type: Number, default: 0 },
     commentsCount: { type: Number, default: 0 },
     user: {
