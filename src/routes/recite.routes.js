@@ -1,5 +1,6 @@
 const express = require("express");
-const Post = require("../models/recite");
+const Recite = require("../models/recite"); // Recite schema
+const Post = require("../models/post");     // Original posts
 const User = require("../models/user");
 
 module.exports = (io) => {
@@ -8,132 +9,96 @@ module.exports = (io) => {
   const getRoomName = (levelType, levelValue) =>
     `level-${levelType}-${levelValue || "all"}`;
 
-  // ✅ Get posts
-  const kenyaData = require("../assets/iebc.json"); // adjust path if needed
+  const kenyaData = require("../assets/iebc.json"); // for levels if needed
 
-    // ✅ Create post
+  // -----------------------
+  // CREATE RECITE
+  // -----------------------
   router.post("/", async (req, res) => {
-  try {
-    const { userId, caption, media, levelType, levelValue, linkPreview, quote, type, originalPostId } = req.body;
+    try {
+      const { userId, quote, type, originalPostId, linkPreview } = req.body;
 
-    const user = await User.findOne({ clerkId: userId });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const newPost = new Post({
-      userId,
-      caption,
-      media,
-      levelType,
-      levelValue,
-      quote,
-      type,
-      originalPostId: originalPostId || null,
-      linkPreview: linkPreview || null,
-      user: {
-        clerkId: user.clerkId,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        nickName: user.nickName,
-        image: user.image,
-      },
-    });
-
-
-    await newPost.save();
-
-
-    const room = getRoomName(levelType, levelValue);
-    io.to(room).emit("newPost", newPost);
-
-    res.status(201).json(newPost);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-
-router.get("/", async (req, res) => {
-  try {
-    const { levelType, levelValue } = req.query;
-
-    // ✅ Include posts that are not deleted
-    const filter = { $or: [{ isDeleted: { $exists: false } }, { isDeleted: false }] };
-
-    const getRelatedLevels = (levelType, levelValue) => {
-      switch (levelType) {
-        case "home":
-          // Home: show only county-level posts
-          return {
-            levelTypes: ["home", "county"],
-            levelValues: null, // null means all counties
-          };
-
-        case "county":
-          // County: show county + constituencies
-          const county = kenyaData.counties.find((c) => c.name === levelValue);
-          if (!county) return { levelTypes: [], levelValues: [] };
-          const constituencyNames = county.constituencies.map((c) => c.name);
-          return {
-            levelTypes: ["county", "constituency"],
-            levelValues: [county.name, ...constituencyNames],
-          };
-
-        case "constituency":
-          // Constituency: show constituency + wards
-          const constituency = kenyaData.counties
-            .flatMap((c) => c.constituencies)
-            .find((cs) => cs.name === levelValue);
-          if (!constituency) return { levelTypes: [], levelValues: [] };
-          const wardNames = constituency.wards.map((w) => w.name);
-          return {
-            levelTypes: ["constituency", "ward"],
-            levelValues: [constituency.name, ...wardNames],
-          };
-
-        case "ward":
-          return { levelTypes: ["ward"], levelValues: [levelValue] };
-
-        default:
-          return { levelTypes: [], levelValues: [] };
+      if (!originalPostId) {
+        return res.status(400).json({ message: "originalPostId is required" });
       }
-    };
 
-    const { levelTypes, levelValues } = getRelatedLevels(levelType, levelValue);
+      // 1️⃣ Get user
+      const user = await User.findOne({ clerkId: userId });
+      if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Build query dynamically
-    const query = {
-      ...filter,
-      levelType: { $in: levelTypes },
-    };
+      // 2️⃣ Get original post (to inherit level info)
+      const originalPost = await Post.findById(originalPostId);
+      if (!originalPost) return res.status(404).json({ message: "Original post not found" });
 
-    if (levelValues) {
-      query.levelValue = { $in: levelValues };
+      // 3️⃣ Create recite
+      const newRecite = new Recite({
+        userId,
+        quote,
+        type: type || "recite",
+        originalPostId,
+        linkPreview: linkPreview || null,
+        levelType: originalPost.levelType,
+        levelValue: originalPost.levelValue,
+        user: {
+          clerkId: user.clerkId,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          nickName: user.nickName,
+          image: user.image,
+        },
+      });
+
+      await newRecite.save();
+
+      // 4️⃣ Emit to the room based on level
+      const room = getRoomName(originalPost.levelType, originalPost.levelValue);
+      io.to(room).emit("newRecite", newRecite);
+
+      res.status(201).json(newRecite);
+    } catch (err) {
+      console.error("❌ Error creating recite:", err);
+      res.status(500).json({ message: "Server error" });
     }
+  });
 
-    const posts = await Post.find(query).sort({ createdAt: -1 });
+  // -----------------------
+  // GET RECITES
+  // -----------------------
+  router.get("/", async (req, res) => {
+    try {
+      const { levelType, levelValue } = req.query;
 
-const postsWithCounts = await Promise.all(
-  posts.map(async (post) => {
-    const quoteCount = await Post.countDocuments({
-      originalPostId: post._id,
-      quote: { $exists: true, $ne: null },
-    });
+      // Include non-deleted recites
+      const filter = { $or: [{ isDeleted: { $exists: false } }, { isDeleted: false }] };
 
-    return {
-      ...post.toObject(),
-      quoteCount,
-    };
-  })
-);
+      // Build query based on levels
+      const query = { ...filter };
+      if (levelType) query.levelType = levelType;
+      if (levelValue) query.levelValue = levelValue;
 
-res.status(200).json(postsWithCounts);
+      const recites = await Recite.find(query).sort({ createdAt: -1 });
 
-  } catch (err) {
-    console.error("❌ Error fetching posts:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+      // Count how many times each original post has been recited
+      const recitesWithCounts = await Promise.all(
+        recites.map(async (recite) => {
+          const quoteCount = await Recite.countDocuments({
+            originalPostId: recite.originalPostId,
+            quote: { $exists: true, $ne: null },
+          });
+
+          return {
+            ...recite.toObject(),
+            quoteCount,
+          };
+        })
+      );
+
+      res.status(200).json(recitesWithCounts);
+    } catch (err) {
+      console.error("❌ Error fetching recites:", err);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
 
   return router;
 };
