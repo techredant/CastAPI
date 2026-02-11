@@ -1,5 +1,5 @@
 const express = require("express");
-const Post = require("../models/post");
+const Post = require("../models/Post");
 const User = require("../models/user");
 
 module.exports = (io) => {
