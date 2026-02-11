@@ -10,7 +10,6 @@ const reciteSchema = new mongoose.Schema(
     reciteNickName: String,
     reciteImage: String,
     levelType: String,
-    quoteCount: { type: Number, default: 0 },
     levelValue: String,
     linkPreview: Object,
     likes: { type: [String], default: [] },
