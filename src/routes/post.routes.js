@@ -1,7 +1,6 @@
 const express = require("express");
 const Post = require("../models/post");
 const User = require("../models/user");
-const Comment = require("../models/comment"); // ✅ Make sure you have a Comment model
 
 module.exports = (io) => {
   const router = express.Router();
@@ -15,7 +14,7 @@ module.exports = (io) => {
     // ✅ Create post
   router.post("/", async (req, res) => {
   try {
-    const { userId, caption, media, levelType, levelValue, linkPreview, quote, type,   originalPostId } = req.body;
+    const { userId, caption, media, levelType, levelValue, linkPreview } = req.body;
 
     const user = await User.findOne({ clerkId: userId });
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -26,9 +25,6 @@ module.exports = (io) => {
       media,
       levelType,
       levelValue,
-      quote,
-      type,
-      originalPostId: originalPostId || null,
       linkPreview: linkPreview || null,
       user: {
         clerkId: user.clerkId,
