@@ -70,21 +70,18 @@ app.use("/api/comments", comentRoutes);
 app.use("/api/recasts", recastRoutes);
 
 
-
-
-
-
 const PORT = 3000;
 
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("✅ MongoDB connectedsdklsdj");
+    console.log("✅ MongoDB connected");
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Server is running weiugr on http://localhost:${PORT}`);
+    server.listen(PORT, () => {
+      console.log(`🚀 Server is running on http://localhost:${PORT}`);
     });
   })
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err.message);
   });
+
