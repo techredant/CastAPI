@@ -13,15 +13,9 @@ module.exports = (io) => {
   const kenyaData = require("../assets/iebc.json"); // adjust path if needed
 
     // ✅ Create post
-router.post("/", async (req, res) => {
+  router.post("/", async (req, res) => {
   try {
-    const {
-      userId,
-      caption,
-      quote,
-      originalPostId,
-      type
-    } = req.body;
+    const { userId, caption, media, levelType, levelValue, linkPreview, quote, type,   originalPostId } = req.body;
 
     const user = await User.findOne({ clerkId: userId });
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -29,9 +23,13 @@ router.post("/", async (req, res) => {
     const newPost = new Post({
       userId,
       caption,
+      media,
+      levelType,
+      levelValue,
       quote,
-      originalPostId: originalPostId || null,
       type,
+      originalPostId: originalPostId || null,
+      linkPreview: linkPreview || null,
       user: {
         clerkId: user.clerkId,
         firstName: user.firstName,
@@ -41,15 +39,14 @@ router.post("/", async (req, res) => {
       },
     });
 
+
     await newPost.save();
 
-    // Populate original post before sending
-    const populatedPost = await Post.findById(newPost._id)
-      .populate("originalPostId");
 
-    io.emit("newPost", populatedPost);
+    const room = getRoomName(levelType, levelValue);
+    io.to(room).emit("newPost", newPost);
 
-    res.status(201).json(populatedPost);
+    res.status(201).json(newPost);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -140,28 +137,71 @@ res.status(200).json(postsWithCounts);
 });
 
 
-router.get("/:userId", async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
-    const { userId } = req.params;
     const { levelType, levelValue } = req.query;
+    const { id } = req.params; // this is the clerkId from frontend
 
-    const posts = await Post.find({
-      userId,
-      levelType,
-      levelValue,
+    // Base filter: include only posts not deleted
+    const filter = {
+      authorId: id,
       $or: [
         { isDeleted: { $exists: false } },
-        { isDeleted: false }
-      ]
+        { isDeleted: false },
+      ],
+    };
+
+    // DEBUG logs
+    const totalPosts = await Post.countDocuments({ authorId: id });
+    console.log(`🟢 Total posts in DB for clerkId ${id}:`, totalPosts);
+
+    if (levelType === "home") {
+      const posts = await Post.find(filter).sort({ createdAt: -1 });
+      console.log(`🟢 Posts returned for HOME:`, posts.length);
+      return res.status(200).json(posts);
+    }
+
+    // --- hierarchy logic for county/constituency/ward ---
+    const getRelatedLevels = (levelType, levelValue) => {
+      if (levelType === "county") {
+        const county = kenyaData.counties.find(c => c.name === levelValue);
+        if (!county) return [];
+        return [
+          county.name,
+          ...county.constituencies.map(c => c.name),
+          ...county.constituencies.flatMap(c => c.wards.map(w => w.name)),
+        ];
+      }
+
+      if (levelType === "constituency") {
+        const constituency = kenyaData.counties
+          .flatMap(c => c.constituencies)
+          .find(cs => cs.name === levelValue);
+        if (!constituency) return [];
+        return [constituency.name, ...constituency.wards.map(w => w.name)];
+      }
+
+      if (levelType === "ward") return [levelValue];
+
+      return [];
+    };
+
+    const relatedLevels = getRelatedLevels(levelType, levelValue);
+
+    const posts = await Post.find({
+      ...filter,
+      levelValue: { $in: relatedLevels },
+      levelType: { $ne: "home" },
     }).sort({ createdAt: -1 });
+
+    console.log(`🟢 Posts returned for ${levelType}:`, posts.length);
 
     res.status(200).json(posts);
   } catch (err) {
-    console.error("❌ Error fetching profile posts:", err);
+    console.error("❌ Error fetching posts:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 
 
