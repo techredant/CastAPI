@@ -246,6 +246,32 @@ router.post("/:id/view", async (req, res) => {
   }
 });
 
+// recastCount
+router.post("/:id/recastCount", async (req, res) => {
+  try {
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } },
+      { new: true }
+    );
+    res.json(post);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to increment views" });
+  }
+});
+// reciteCount
+router.post("/:id/reciteCount", async (req, res) => {
+  try {
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } },
+      { new: true }
+    );
+    res.json(post);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to increment views" });
+  }
+});
 
 //   // ✅ Delete post (with ownership check)
 router.delete("/:id", async (req, res) => {
