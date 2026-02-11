@@ -60,7 +60,16 @@ module.exports = (io) => {
       const room = getRoomName(originalPost.levelType, originalPost.levelValue);
       io.to(room).emit("newRecite", newRecite);
 
-      res.status(201).json(newRecite);
+      const recite = await Recite.create(req.body);
+
+// ✅ Increment the quoteCount on the original post
+if (recite.originalPostId) {
+  await Post.findByIdAndUpdate(
+    recite.originalPostId,
+    { $inc: { quoteCount: 1 } },
+    { new: true }
+  );
+}
     } catch (err) {
       console.error("❌ Error creating recite:", err);
       res.status(500).json({ message: "Server error" });

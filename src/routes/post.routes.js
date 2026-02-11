@@ -23,7 +23,7 @@ module.exports = (io) => {
       userId,
       caption,
       media,
-      levelType,
+      levelType, 
       levelValue,
       linkPreview: linkPreview || null,
       user: {

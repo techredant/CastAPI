@@ -7,6 +7,7 @@ const postSchema = new mongoose.Schema(
     media: [String],
     levelType: String,
     levelValue: String,
+     quoteCount: { type: Number, default: 0 }, // ✅ Add this
     linkPreview: Object,
     likes: { type: [String], default: [] },
     isDeleted: { type: Boolean, default: false },
