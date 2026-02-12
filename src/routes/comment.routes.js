@@ -160,20 +160,27 @@ router.post("/:commentId/replies/:replyId/like", async (req, res) => {
 router.delete("/:commentId", async (req, res) => {
   try {
     const { commentId } = req.params;
+
+    // Find the comment
     const comment = await Comment.findById(commentId);
     if (!comment) return res.status(404).json({ message: "Comment not found" });
 
-    await Comment.findByIdAndDelete(commentId);
+    // Soft-delete: mark as deleted instead of removing
+    comment.isDeleted = true;
+    await comment.save();
+
+    // Decrement comments count in the post
     await Post.findByIdAndUpdate(comment.postId, {
       $inc: { commentsCount: -1 },
     });
 
-    res.json({ message: "Comment deleted" });
+    res.json({ message: "Comment deleted", comment });
   } catch (err) {
     console.error("Error deleting comment:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 router.patch("/:id/views", async (req, res) => {
   try {
