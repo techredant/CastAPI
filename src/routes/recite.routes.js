@@ -13,44 +13,97 @@ module.exports = (io) => {
   // CREATE RECITE
   // =========================
   router.post("/", async (req, res) => {
-  try {
-    const { userId, caption, media, levelType, levelValue, linkPreview, quote, originalPostId } = req.body;
+    try {
+      const {
+        userId,
+        quote,
+        caption,
+        originalPostId,
+        linkPreview,
+      } = req.body;
 
-    const user = await User.findOne({ clerkId: userId });
-    if (!user) return res.status(404).json({ message: "User not found" });
+      if (!originalPostId) {
+        return res.status(400).json({
+          message: "originalPostId is required",
+        });
+      }
 
-    const newPost = new Post({
-      userId,
-      caption,
-      media,
-      levelType, 
-      levelValue,
-      quote: quote || null,
-      originalPostId: originalPostId || null,
-      linkPreview: linkPreview || null,
-      user: {
-        clerkId: user.clerkId,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        nickName: user.nickName,
-        image: user.image,
-      },
-    });
+      // Find user
+      const user = await User.findOne({ clerkId: userId });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
 
+      // Find original post
+      const originalPost = await Post.findById(originalPostId);
+      if (!originalPost) {
+        return res.status(404).json({
+          message: "Original post not found",
+        });
+      }
 
-    await newPost.save();
+      // Prevent duplicate recites
+      const existing = await Recite.findOne({
+        userId,
+        originalPostId,
+      });
 
+      if (existing) {
+        return res.status(400).json({
+          message: "You already recited this post",
+        });
+      }
 
-    await Post.findByIdAndUpdate(originalPostId, { $inc: { viewsCount: 1 } });
-    const room = getRoomName(levelType, levelValue);
-    io.to(room).emit("newPost", newPost);
+      // Create recite
+      const newRecite = new Recite({
+        userId,
+        caption,
+        quote: quote || null,
+        originalPostId,
+        linkPreview: linkPreview || null,
 
-    res.status(201).json(newPost);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+        // Inherit level from original post
+        levelType: originalPost.levelType,
+        levelValue: originalPost.levelValue,
+
+        // Save recited post info
+        reciteMedia: originalPost.media,
+
+        // Save original post creator info
+        reciteFirstName: originalPost.user.firstName,
+        reciteLastName: originalPost.user.lastName,
+        reciteNickName: originalPost.user.nickName,
+        reciteImage: originalPost.user.image,
+
+        // Current user info
+        user: {
+          clerkId: user.clerkId,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          nickName: user.nickName,
+          image: user.image,
+        },
+      });
+
+      await newRecite.save();
+
+      // Emit to correct level room
+      const room = getRoomName(
+        originalPost.levelType,
+        originalPost.levelValue
+      );
+
+      io.to(room).emit("newRecite", newRecite);
+
+      return res.status(201).json(newRecite);
+
+    } catch (err) {
+      console.error("❌ Error creating recite:", err);
+      return res.status(500).json({
+        message: "Server error",
+      });
+    }
+  });
 
   // =========================
   // GET RECITES
