@@ -42,7 +42,7 @@ module.exports = (io) => {
 
 
     const room = getRoomName(levelType, levelValue);
-    io.to(room).emit("newPost", newPost);
+    io.to(room).emit("newRecite", newPost);
 
     res.status(201).json(newPost);
   } catch (err) {
