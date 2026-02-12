@@ -1,39 +1,64 @@
 const express = require("express");
 const router = express.Router();
 const Post = require("../models/post");
+const Recite = require("../models/recite"); // if you want to handle recites too
 
-// Repost a post
+// Repost a post (recast)
 module.exports = (io) => {
   router.post("/", async (req, res) => {
     try {
-      const { userId, originalPostId, quote } = req.body;
+      const {
+        userId,          // the user who is recasting
+        originalPostId,  // ID of the post or recite being recast
+        quote,           // optional text
+        type,            // "post" or "recite"
+      } = req.body;
 
-      const originalPost = await Post.findById(originalPostId);
-      if (!originalPost)
+      // Fetch the original post or recite
+      let original;
+      if (type === "recite") {
+        original = await Recite.findById(originalPostId);
+      } else {
+        original = await Post.findById(originalPostId);
+      }
+
+      if (!original)
         return res.status(404).json({ message: "Original post not found" });
 
+      // Build the recast
       const newRecast = new Post({
         userId,
-        caption: originalPost.caption,
-        media: originalPost.media,
-        levelType: originalPost.levelType,
-        levelValue: originalPost.levelValue,
-        quote,
-        originalPostId: originalPost._id,
-        type: "recast",
-        user: originalPost.user,
+        caption: original.caption,
+        media: original.media || [],
+        reciteMedia: original.reciteMedia || [],
+        levelType: original.levelType,
+        levelValue: original.levelValue,
+        quote: quote || "",
+        originalPostId: original._id,
+        reciteFirstName: original.user?.firstName || "",
+        reciteLastName: original.user?.lastName || "",
+        reciteNickName: original.user?.nickName || "Anonymous",
+        reciteImage: original.user?.image || "",
+        user: {
+          clerkId: userId,
+          firstName: req.body.firstName || "",
+          lastName: req.body.lastName || "",
+          nickName: req.body.nickName || "Anonymous",
+          image: req.body.image || "",
+        },
       });
 
- await Post.findByIdAndUpdate(originalPostId, { $inc: { recastCount: 1 } });
-      
-      await newRecast.save();
-      
+      // Increment recast count on the original post
+      await Post.findByIdAndUpdate(originalPostId, { $inc: { recastCount: 1 } });
 
-      const room = `level-${originalPost.levelType}-${originalPost.levelValue}`;
+      // Save the new recast
+      await newRecast.save();
+
+      // Emit via socket
+      const room = `level-${original.levelType}-${original.levelValue}`;
       io.to(room).emit("newRecast", newRecast);
 
-      res.status(201).json(newRecast);
-
+      return res.status(201).json(newRecast);
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: "Failed to repost" });
