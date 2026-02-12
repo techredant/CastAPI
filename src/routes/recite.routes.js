@@ -94,7 +94,7 @@ module.exports = (io) => {
         originalPost.levelValue
       );
 
-      io.to(room).emit("newRecite", newRecite);
+      io.to(room).emit("newRoom", newRecite);
 
       return res.status(201).json(newRecite);
 
