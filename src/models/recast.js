@@ -4,8 +4,8 @@ const postSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true },
     caption: String,
-    media: [String],          // post media
-    reciteMedia: [String],    // recite media if any
+    media: [String],
+    reciteMedia: [String],
 
     levelType: String,
     levelValue: String,
@@ -20,17 +20,15 @@ const postSchema = new mongoose.Schema(
     originalPostId: { type: mongoose.Schema.Types.ObjectId, ref: "Post", default: null },
 
     views: { type: Number, default: 0 },
-    recastCount: { type: Number, default: 0 },
-    reciteCount: { type: Number, default: 0 },
     commentsCount: { type: Number, default: 0 },
 
-    // Recite / Recast info
+    // Recite user info
     reciteFirstName: String,
     reciteLastName: String,
     reciteNickName: String,
     reciteImage: String,
 
-    user: {                  // Original post user
+    user: {
       clerkId: String,
       firstName: String,
       lastName: String,
