@@ -85,6 +85,7 @@ module.exports = (io) => {
         },
       });
 
+     await Post.findByIdAndUpdate(originalPostId, { $inc: { reciteCount: 1 } });
       await newRecite.save();
 
       // Emit to correct level room
