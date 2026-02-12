@@ -25,7 +25,7 @@ module.exports = (io) => {
       media,
       levelType, 
       levelValue,
-      quote,
+      quote: quote || null,
       originalPostId: originalPostId || null,
       linkPreview: linkPreview || null,
       user: {
