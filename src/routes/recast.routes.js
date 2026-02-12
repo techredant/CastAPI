@@ -24,7 +24,10 @@ module.exports = (io) => {
         user: originalPost.user,
       });
 
+ await Post.findByIdAndUpdate(originalPostId, { $inc: { recastCount: 1 } });
+      
       await newRecast.save();
+      
 
       const room = `level-${originalPost.levelType}-${originalPost.levelValue}`;
       io.to(room).emit("newRecast", newRecast);
