@@ -66,7 +66,7 @@ app.use("/api/stream", streamRoutes);
 app.use("/api/upsertai",  upsertRoutes);
 app.use("/api/ai-reply", aiRoutes);
 
-app.use("/api/comments", comentRoutes);
+app.use("/", comentRoutes);
 app.use("/api/recasts", recastRoutes);
 
 
