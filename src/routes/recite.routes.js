@@ -1,6 +1,6 @@
 const express = require("express");
-const Recite = require("../models/recite");
 const Post = require("../models/post");
+const Recite = require("../models.recite")
 const User = require("../models/user");
 
 module.exports = (io) => {
@@ -81,7 +81,7 @@ module.exports = (io) => {
         const { userId } = req.body;
         if (!userId) return res.status(400).json({ message: "Missing userId" });
   
-        const post = await Post.findById(req.params.id);
+        const post = await Recite.findById(req.params.id);
         if (!post) return res.status(404).json({ message: "Post not found" });
   
         const alreadyLiked = post.likes.includes(userId);

@@ -14,7 +14,7 @@ const reciteSchema = new mongoose.Schema(
     linkPreview: Object,
     likes: { type: [String], default: [] },
     isDeleted: { type: Boolean, default: false },
-     quote: { type: String, default: "" },
+    quote: { type: String, default: "" },
     originalPostId: { type: mongoose.Schema.Types.ObjectId, ref: "Post", default: null },
     views: { type: Number, default: 0 },
     commentsCount: { type: Number, default: 0 },
