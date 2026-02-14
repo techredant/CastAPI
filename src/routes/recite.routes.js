@@ -1,6 +1,6 @@
 const express = require("express");
 const Post = require("../models/post");
-const Recite = require("../models.recite")
+const Recite = require("../models/recite")
 const User = require("../models/user");
 
 module.exports = (io) => {
