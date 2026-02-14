@@ -180,10 +180,16 @@ router.post("/update-image", async (req, res) => {
 
 
 // POST /:clerkId/follow-action/:targetClerkId?action=follow|unfollow
+
+// POST /:clerkId/follow-action/:targetClerkId?action=follow|unfollow
 router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
   try {
     const { clerkId, targetClerkId } = req.params;
-    const action = req.query.action; // "follow" or "unfollow"
+    const action = req.query.action;
+
+    if (!["follow", "unfollow"].includes(action)) {
+      return res.status(400).json({ error: "Invalid action" });
+    }
 
     if (clerkId === targetClerkId) {
       return res.status(400).json({ error: "You cannot follow yourself" });
@@ -196,30 +202,38 @@ router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // Convert to ObjectIds
+    const userIdObj = user._id;
+    const targetIdObj = target._id;
+
     if (action === "follow") {
-      if (!target.followers.includes(clerkId)) target.followers.push(clerkId);
-      if (!user.following.includes(targetClerkId)) user.following.push(targetClerkId);
-      await target.save();
-      await user.save();
-      return res.json({ success: true, message: "Followed successfully", target });
-    } 
-    
-    if (action === "unfollow") {
-      target.followers = target.followers.filter((id) => id !== clerkId);
-      user.following = user.following.filter((id) => id !== targetClerkId);
-      await target.save();
-      await user.save();
-      return res.json({ success: true, message: "Unfollowed successfully", target });
+      // Only add if not already present
+      if (!target.followers.some((id) => id.equals(userIdObj))) {
+        target.followers.push(userIdObj);
+      }
+      if (!user.following.some((id) => id.equals(targetIdObj))) {
+        user.following.push(targetIdObj);
+      }
     }
 
-    return res.status(400).json({ error: "Invalid action" });
+    if (action === "unfollow") {
+      target.followers = target.followers.filter((id) => !id.equals(userIdObj));
+      user.following = user.following.filter((id) => !id.equals(targetIdObj));
+    }
+
+    await target.save();
+    await user.save();
+
+    res.json({
+      success: true,
+      message: action === "follow" ? "Followed successfully" : "Unfollowed successfully",
+      target,
+    });
   } catch (error) {
     console.error("Error in follow-action:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
-
-
 
 // ------------------- GET ALL USERS -------------------
 router.get("/", async (req, res) => {
