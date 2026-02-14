@@ -39,9 +39,10 @@ const postSchema = new mongoose.Schema(
       image: String,
     },
 
-    type: { type: String, default: "recast" }, // "post" | "recast" | "recite"
+    type: { type: String, default: "post" }, // "post" | "recast" | "recite"
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Recast", postSchema);
+// ⚡ Export as Post — do NOT create a separate Recast model
+module.exports = mongoose.models.Post || mongoose.model("Post", postSchema);
