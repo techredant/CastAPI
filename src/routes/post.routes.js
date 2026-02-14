@@ -14,7 +14,7 @@ module.exports = (io) => {
     // ✅ Create post
   router.post("/", async (req, res) => {
     try {
-      const { userId, caption, media, quote, originalPostId, type } = req.body;
+      const { userId, caption, media, quote, originalPostId, levelType, levelValue, type } = req.body;
       if (!userId) return res.status(400).json({ message: "userId is required" });
 
       const user = await User.findOne({ clerkId: userId });
@@ -31,8 +31,8 @@ module.exports = (io) => {
         caption: caption || (originalPost?.caption || ""),
         media: media || (originalPost?.media || []),
         reciteMedia: originalPost?.media || [],
-        levelType: originalPost?.levelType || "home",
-        levelValue: originalPost?.levelValue || "home",
+        levelType: originalPost?.levelType || levelType,
+        levelValue: originalPost?.levelValue || levelValue,
         quote: quote || (originalPost?.quote || null),
         originalPostId: originalPostId || null,
         type: type || "post",
