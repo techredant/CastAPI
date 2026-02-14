@@ -13,41 +13,54 @@ module.exports = (io) => {
 
     // ✅ Create post
   router.post("/", async (req, res) => {
-  try {
-    const { userId, caption, media, levelType, levelValue, linkPreview } = req.body;
+    try {
+      const { userId, caption, media, quote, originalPostId, type } = req.body;
+      if (!userId) return res.status(400).json({ message: "userId is required" });
 
-    const user = await User.findOne({ clerkId: userId });
-    if (!user) return res.status(404).json({ message: "User not found" });
+      const user = await User.findOne({ clerkId: userId });
+      if (!user) return res.status(404).json({ message: "User not found" });
 
-    const newPost = new Post({
-      userId,
-      caption,
-      media,
-      levelType, 
-      levelValue,
-      linkPreview: linkPreview || null,
-      user: {
-        clerkId: user.clerkId,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        nickName: user.nickName,
-        image: user.image,
-      },
-    });
+      let originalPost = null;
+      if (originalPostId) {
+        originalPost = await Post.findById(originalPostId);
+        if (!originalPost) return res.status(404).json({ message: "Original post not found" });
+      }
 
+      const newPost = new Post({
+        userId,
+        caption: caption || (originalPost?.caption || ""),
+        media: media || (originalPost?.media || []),
+        reciteMedia: originalPost?.media || [],
+        levelType: originalPost?.levelType || "default",
+        levelValue: originalPost?.levelValue || "default",
+        quote: quote || (originalPost?.quote || null),
+        originalPostId: originalPostId || null,
+        type: type || "post",
+        user: {
+          clerkId: user.clerkId,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          nickName: user.nickName,
+          image: user.image,
+        },
+        reciteFirstName: originalPost?.user?.firstName || "",
+        reciteLastName: originalPost?.user?.lastName || "",
+        reciteNickName: originalPost?.user?.nickName || "",
+        reciteImage: originalPost?.user?.image || "",
+      });
 
-    await newPost.save();
+      await newPost.save();
 
+      const room = getRoomName(newPost.levelType, newPost.levelValue);
+      io.to(room).emit("newPost", newPost);
 
-    const room = getRoomName(levelType, levelValue);
-    io.to(room).emit("newPost", newPost);
+      return res.status(201).json(newPost);
 
-    res.status(201).json(newPost);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+    } catch (err) {
+      console.error("❌ Error creating post:", err);
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
 
 
 router.get("/", async (req, res) => {
