@@ -47,6 +47,9 @@ module.exports = (io) => {
         reciteLastName: originalPost?.user?.lastName || "",
         reciteNickName: originalPost?.user?.nickName || "",
         reciteImage: originalPost?.user?.image || "",
+
+        recastCount: 0,
+        reciteCount: 0
       });
 
       await newPost.save();
