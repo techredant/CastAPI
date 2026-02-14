@@ -2,29 +2,38 @@ const express = require("express");
 const router = express.Router();
 const Post = require("../models/post");
 
-// Recast route
 module.exports = (io) => {
   router.post("/", async (req, res) => {
     try {
       const { userId, originalPostId, quote } = req.body;
 
+      if (!originalPostId) {
+        return res.status(400).json({ message: "originalPostId is required" });
+      }
+
       // 1️⃣ Find the original post
-      const originalPost = await Post.findById(originalPostId);
+      let originalPost = await Post.findById(originalPostId);
       if (!originalPost) {
         return res.status(404).json({ message: "Original post not found" });
       }
 
+      // If the original post is itself a recast/quote, follow the chain to the real original
+      if (originalPost.originalPostId) {
+        const parentPost = await Post.findById(originalPost.originalPostId);
+        if (parentPost) originalPost = parentPost;
+      }
+
       // 2️⃣ Create the new recast post
       const newRecast = new Post({
-        userId,                     // user who recasts
+        userId,
         caption: originalPost.caption,
         media: originalPost.media,
         levelType: originalPost.levelType,
         levelValue: originalPost.levelValue,
         quote: quote || null,
-        originalPostId: originalPost._id, // LINK to original
+        originalPostId: originalPost._id,
         type: "recast",
-        user: originalPost.user,          // optional: can remove if you fetch later via ref
+        user: originalPost.user, // optional
       });
 
       await newRecast.save();
