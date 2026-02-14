@@ -75,6 +75,35 @@ module.exports = (io) => {
     }
   });
 
+    // ✅ Like / Unlike
+    router.post("/:id/like", async (req, res) => {
+      try {
+        const { userId } = req.body;
+        if (!userId) return res.status(400).json({ message: "Missing userId" });
+  
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.status(404).json({ message: "Post not found" });
+  
+        const alreadyLiked = post.likes.includes(userId);
+        if (alreadyLiked) {
+          post.likes = post.likes.filter((id) => id !== userId);
+        } else {
+          post.likes.push(userId);
+        }
+  
+        await post.save();
+        io.to(getRoomName(post.levelType, post.levelValue)).emit(
+          "updatePost",
+          post
+        );
+  
+        res.status(200).json(post);
+      } catch (err) {
+        console.error("❌ Error liking post:", err);
+        res.status(500).json({ message: "Server error" });
+      }
+    });
+
   // =========================
   // GET RECITES
   // =========================
