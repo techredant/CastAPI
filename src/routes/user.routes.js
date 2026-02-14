@@ -179,65 +179,46 @@ router.post("/update-image", async (req, res) => {
 });
 
 
-// // ------------------- FOLLOW -------------------
-// router.post("/:clerkId/follow/:targetClerkId", async (req, res) => {
-//   try {
-//     const { clerkId, targetClerkId } = req.params;
+// POST /:clerkId/follow-action/:targetClerkId?action=follow|unfollow
+router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
+  try {
+    const { clerkId, targetClerkId } = req.params;
+    const action = req.query.action; // "follow" or "unfollow"
 
-//     if (clerkId === targetClerkId) {
-//       return res.status(400).json({ error: "You cannot follow yourself" });
-//     }
+    if (clerkId === targetClerkId) {
+      return res.status(400).json({ error: "You cannot follow yourself" });
+    }
 
-//     const user = await User.findOne({ clerkId });
-//     const target = await User.findOne({ clerkId: targetClerkId });
+    const user = await User.findOne({ clerkId });
+    const target = await User.findOne({ clerkId: targetClerkId });
 
-//     if (!user || !target) {
-//       return res.status(404).json({ error: "User not found" });
-//     }
+    if (!user || !target) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-//     // Prevent duplicate follow
-//     if (!target.followers.includes(clerkId)) {
-//       target.followers.push(clerkId);
-//       await target.save();
-//     }
+    if (action === "follow") {
+      if (!target.followers.includes(clerkId)) target.followers.push(clerkId);
+      if (!user.following.includes(targetClerkId)) user.following.push(targetClerkId);
+      await target.save();
+      await user.save();
+      return res.json({ success: true, message: "Followed successfully", target });
+    } 
+    
+    if (action === "unfollow") {
+      target.followers = target.followers.filter((id) => id !== clerkId);
+      user.following = user.following.filter((id) => id !== targetClerkId);
+      await target.save();
+      await user.save();
+      return res.json({ success: true, message: "Unfollowed successfully", target });
+    }
 
-//     // Add to current user's following list
-//     if (!user.following.includes(targetClerkId)) {
-//       user.following.push(targetClerkId);
-//       await user.save();
-//     }
+    return res.status(400).json({ error: "Invalid action" });
+  } catch (error) {
+    console.error("Error in follow-action:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
-//     res.json({ success: true, message: "Followed successfully", target });
-//   } catch (error) {
-//     console.error("Error following:", error);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// });
-
-// // ------------------- UNFOLLOW -------------------
-// router.post("/:clerkId/unfollow/:targetClerkId", async (req, res) => {
-//   try {
-//     const { clerkId, targetClerkId } = req.params;
-
-//     const user = await User.findOne({ clerkId });
-//     const target = await User.findOne({ clerkId: targetClerkId });
-
-//     if (!user || !target) {
-//       return res.status(404).json({ error: "User not found" });
-//     }
-
-//     target.followers = target.followers.filter((id) => id !== clerkId);
-//     user.following = user.following.filter((id) => id !== targetClerkId);
-
-//     await target.save();
-//     await user.save();
-
-//     res.json({ success: true, message: "Unfollowed successfully", target });
-//   } catch (error) {
-//     console.error("Error unfollowing:", error);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// });
 
 
 // ------------------- GET ALL USERS -------------------
