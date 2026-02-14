@@ -7,42 +7,37 @@ module.exports = (io) => {
     try {
       const { userId, originalPostId, quote } = req.body;
 
-      if (!originalPostId) {
-        return res.status(400).json({ message: "originalPostId is required" });
+      if (!userId || !originalPostId) {
+        return res.status(400).json({ message: "userId and originalPostId are required" });
       }
 
-      // 1️⃣ Find the original post
-      let originalPost = await Post.findById(originalPostId);
+      // 1️⃣ Find the original post (root of the thread)
+      const originalPost = await Post.findById(originalPostId);
       if (!originalPost) {
         return res.status(404).json({ message: "Original post not found" });
       }
 
-      // If the original post is itself a recast/quote, follow the chain to the real original
-      if (originalPost.originalPostId) {
-        const parentPost = await Post.findById(originalPost.originalPostId);
-        if (parentPost) originalPost = parentPost;
-      }
-
-      // 2️⃣ Create the new recast post
+      // 2️⃣ Build the recast post
       const newRecast = new Post({
-        userId,
+        userId,                       // The user who recasts
         caption: originalPost.caption,
         media: originalPost.media,
         levelType: originalPost.levelType,
         levelValue: originalPost.levelValue,
-        quote: quote || null,
-        originalPostId: originalPost._id,
+        quote: quote || originalPost.quote || null,  // Keep quote if provided, fallback to original
+        originalPostId: originalPost.originalPostId || originalPost._id, // always link to root
         type: "recast",
-        user: originalPost.user, // optional
+        user: originalPost.user,       // info of original creator
       });
 
+      // 3️⃣ Save to DB
       await newRecast.save();
 
-      // 3️⃣ Emit new recast to socket room
+      // 4️⃣ Emit to correct level room via socket
       const room = `level-${originalPost.levelType}-${originalPost.levelValue}`;
       io.to(room).emit("newRecast", newRecast);
 
-      // 4️⃣ Return new recast
+      // 5️⃣ Return the new recast
       res.status(201).json(newRecast);
 
     } catch (err) {
