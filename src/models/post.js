@@ -20,6 +20,10 @@ const postSchema = new mongoose.Schema(
     views: { type: Number, default: 0 },
     commentsCount: { type: Number, default: 0 },
 
+    reciteCount: { type: Number, default: 0 },
+    recastCount: { type: Number, default: 0 },
+
+
     // Optional info if recited or recast
     reciteFirstName: String,
     reciteLastName: String,
