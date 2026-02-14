@@ -43,7 +43,7 @@ io.on("connection", (socket) => {
 
 const userRoutes = require("./routes/user.routes");
 const postRoutes = require("./routes/post.routes")(io);
-const reciteRoutes = require("./routes/recite.routes")(io);
+// const reciteRoutes = require("./routes/recite.routes")(io);
 const productRoutes = require("./routes/product.routes");
 // const newsRoutes = require("./routes/news.routes");
 const aiRoutes = require("./routes/ai.routes")
@@ -52,11 +52,11 @@ const upsertRoutes = require("./routes/upsertai.routes")
 const streamRoutes = require("./routes/stream.routes");
 
 const comentRoutes = require("./routes/comment.routes");
-const recastRoutes = require("./routes/recast.routes")(io);
+// const recastRoutes = require("./routes/recast.routes")(io);
 
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
-app.use("/api/recites", reciteRoutes);
+// app.use("/api/recites", reciteRoutes);
 
 app.use("/api/products", productRoutes);
 // app.use("/api/news", newsRoutes);
@@ -67,7 +67,7 @@ app.use("/api/upsertai",  upsertRoutes);
 app.use("/api/ai-reply", aiRoutes);
 
 app.use("/api", comentRoutes);
-app.use("/api/recasts", recastRoutes);
+// app.use("/api/recasts", recastRoutes);
 
 
 const PORT = 3000;
