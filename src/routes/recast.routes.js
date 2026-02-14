@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Post = require("../models/post");
+const Recast = require("../models/recast");
 
 module.exports = (io) => {
   router.post("/", async (req, res) => {
@@ -12,7 +12,7 @@ module.exports = (io) => {
       }
 
       // 1️⃣ Find the original post (root of the thread)
-      const originalPost = await Post.findById(originalPostId);
+      const originalPost = await Recast.findById(originalPostId);
       if (!originalPost) {
         return res.status(404).json({ message: "Original post not found" });
       }
