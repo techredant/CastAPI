@@ -1,21 +1,20 @@
-// server/routes/upsert-ai.js
+// server/routes/upsert-ai-channel.js
 const express = require("express");
 const { StreamChat } = require("stream-chat");
 const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
-    console.log("🌐 Upserting AI user...");
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ message: "userId is required" });
 
+    // 1️⃣ Initialize Stream server client
     const serverClient = StreamChat.getInstance(
       process.env.STREAM_API_KEY,
       process.env.STREAM_API_SECRET
     );
 
-    if (!serverClient) {
-      console.error("❌ Stream client not initialized");
-    }
-
+    // 2️⃣ Upsert AI user (recreates if deleted)
     await serverClient.upsertUser({
       id: "ai-assistant",
       name: "AI Assistant",
@@ -23,13 +22,27 @@ router.post("/", async (req, res) => {
       role: "user",
     });
 
-    console.log("✅ AI user upserted");
-    return res.json({ success: true });
+    // 3️⃣ Create or get AI channel with current user + AI
+    const aiChannel = serverClient.channel("messaging", `ai-chat-${userId}`, {
+      members: [userId, "ai-assistant"],
+    });
+
+    // 4️⃣ Watch the channel so it exists
+    await aiChannel.watch();
+
+    // 5️⃣ Return channel data
+    return res.json({
+      success: true,
+      channel: {
+        id: aiChannel.id,
+        cid: aiChannel.cid,
+        members: aiChannel.state.members,
+      },
+    });
   } catch (err) {
-    console.error("❌ Error recreating AI user:", err);
+    console.error("❌ Failed to upsert AI + channel:", err);
     return res.status(500).json({ message: "Server error", error: err.message });
   }
 });
-
 
 module.exports = router;
