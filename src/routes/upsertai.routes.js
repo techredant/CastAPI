@@ -5,12 +5,12 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
+    // 🔑 Use server keys
     const serverClient = StreamChat.getInstance(
       process.env.STREAM_API_KEY,
       process.env.STREAM_API_SECRET
     );
 
-    // Upsert AI user — recreate if deleted
     await serverClient.upsertUser({
       id: "ai-assistant",
       name: "AI Assistant",
@@ -18,10 +18,10 @@ router.post("/", async (req, res) => {
       role: "user",
     });
 
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (err) {
-    console.error("Error recreating AI user:", err);
-    res.status(500).json({ error: "Failed to recreate AI user" });
+    console.error("❌ Error recreating AI user:", err);
+    return res.status(500).json({ error: "Failed to recreate AI user" });
   }
 });
 
