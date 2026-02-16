@@ -1,6 +1,7 @@
+// server/routes/upsert-ai.js
 const express = require("express");
-const router = express.Router();
 const { StreamChat } = require("stream-chat");
+const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
@@ -9,6 +10,7 @@ router.post("/", async (req, res) => {
       process.env.STREAM_API_SECRET
     );
 
+    // Upsert AI user — recreate if deleted
     await serverClient.upsertUser({
       id: "ai-assistant",
       name: "AI Assistant",
@@ -18,8 +20,8 @@ router.post("/", async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error("Error creating AI user:", err);
-    res.status(500).json({ error: "Failed to create AI assistant user" });
+    console.error("Error recreating AI user:", err);
+    res.status(500).json({ error: "Failed to recreate AI user" });
   }
 });
 
