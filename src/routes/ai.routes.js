@@ -2,31 +2,20 @@ const express = require("express");
 const router = express.Router();
 const { StreamChat } = require("stream-chat");
 
-// Stream server client
-const client = StreamChat.getInstance(
+const serverClient = StreamChat.getInstance(
   process.env.STREAM_API_KEY,
   process.env.STREAM_API_SECRET
 );
 
-
 router.post("/", async (req, res) => {
   try {
-    const { type, message, channel } = req.body;
-    const channel_id = channel?.id;
+    const { message, channel_id } = req.body;
 
-    if (!channel_id) {
-      return res.status(400).json({ error: "Missing channel_id" });
+    if (!message || !channel_id) {
+      return res.status(400).json({ error: "Missing message or channel_id" });
     }
 
-    if (type !== "message.new") {
-      return res.json({ received: true });
-    }
-
-    if (message?.user?.id === "ai-assistant") {
-      return res.json({ ignored: true });
-    }
-
-    // 🔥 Call Cloudflare AI
+    // 1️⃣ Call Flare AI
     const cfResponse = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
       {
@@ -44,26 +33,23 @@ router.post("/", async (req, res) => {
       }
     );
 
-    const result = await cfResponse.json();
+    const cfData = await cfResponse.json();
+    const aiText = cfData?.result?.response || "Sorry, I didn't understand that.";
 
-    const aiText =
-      result?.result?.response ||
-      "Sorry, I didn’t quite get that. Can you rephrase?";
+    // 2️⃣ Send AI reply to Stream
+    const channel = serverClient.channel("messaging", channel_id);
+    await channel.watch(); // ensure channel is loaded
 
-    // 🔥 IMPORTANT: do NOT call watch() here
-    const streamChannel = client.channel("messaging", channel_id);
-
-    await streamChannel.sendMessage({
+    await channel.sendMessage({
       text: aiText,
-      user_id: "ai-assistant",
+      user_id: message.user.id, // or a placeholder like "ai"
     });
 
-    return res.json({ success: true, reply: aiText });
-  } catch (error) {
-    console.error("AI reply error:", error);
-    return res.status(500).json({ error: error.message });
+    res.json({ success: true, reply: aiText });
+  } catch (err) {
+    console.error("AI reply error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
- module.exports = router;
-
+module.exports = router;
