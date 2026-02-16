@@ -1,30 +1,21 @@
-const express = require("express");
-const router = express.Router();
-const { StreamChat } = require("stream-chat");
-
-// Stream server client
-const client = StreamChat.getInstance(
-  process.env.STREAM_API_KEY,
-  process.env.STREAM_API_SECRET
-);
-
 router.post("/", async (req, res) => {
   try {
-    const { type, message, channel_id } = req.body;
+    const { type, message, channel } = req.body;
+    const channel_id = channel?.id;
 
-    console.log("Incoming webhook:", type);
+    if (!channel_id) {
+      return res.status(400).json({ error: "Missing channel_id" });
+    }
 
-    // Only respond to new messages
     if (type !== "message.new") {
       return res.json({ received: true });
     }
 
-    // Prevent AI replying to itself
     if (message?.user?.id === "ai-assistant") {
       return res.json({ ignored: true });
     }
 
-    // 1️⃣ Call Cloudflare AI
+    // 🔥 Call Cloudflare AI
     const cfResponse = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
       {
@@ -43,17 +34,15 @@ router.post("/", async (req, res) => {
     );
 
     const result = await cfResponse.json();
-    console.log("CF RAW RESPONSE:", result);
 
     const aiText =
       result?.result?.response ||
       "Sorry, I didn’t quite get that. Can you rephrase?";
 
-    // 2️⃣ Send AI message to Stream
-    const channel = client.channel("messaging", channel_id);
-    await channel.watch();
+    // 🔥 IMPORTANT: do NOT call watch() here
+    const streamChannel = client.channel("messaging", channel_id);
 
-    await channel.sendMessage({
+    await streamChannel.sendMessage({
       text: aiText,
       user_id: "ai-assistant",
     });
@@ -64,5 +53,3 @@ router.post("/", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
-
-module.exports = router;
