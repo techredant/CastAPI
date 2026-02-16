@@ -1,54 +1,42 @@
 const express = require("express");
+const axios = require("axios");
+
 const router = express.Router();
-const { StreamChat } = require("stream-chat");
 
-const serverClient = StreamChat.getInstance(
-  process.env.STREAM_API_KEY,
-  process.env.STREAM_API_SECRET
-);
+const BASE_URL = `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run`;
 
-router.post("/", async (req, res) => {
+// 🔥 Chat endpoint
+router.post("/chat", async (req, res) => {
   try {
-    const { message, channel_id } = req.body;
+    const { message } = req.body;
 
-    if (!message || !channel_id) {
-      return res.status(400).json({ error: "Missing message or channel_id" });
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
     }
 
-    // 1️⃣ Call Flare AI
-    const cfResponse = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
+    const response = await axios.post(
+      `${BASE_URL}/@cf/meta/llama-3-8b-instruct`,
       {
-        method: "POST",
+        messages: [{ role: "user", content: message }],
+      },
+      {
         headers: {
           Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          messages: [
-            { role: "system", content: "You are a helpful AI assistant in a chat app." },
-            { role: "user", content: message.text },
-          ],
-        }),
       }
     );
 
-    const cfData = await cfResponse.json();
-    const aiText = cfData?.result?.response || "Sorry, I didn't understand that.";
-
-    // 2️⃣ Send AI reply to Stream
-    const channel = serverClient.channel("messaging", channel_id);
-    await channel.watch(); // ensure channel is loaded
-
-    await channel.sendMessage({
-      text: aiText,
-      user_id: message.user.id, // or a placeholder like "ai"
+    res.json({
+      reply: response.data.result.response,
     });
-
-    res.json({ success: true, reply: aiText });
   } catch (err) {
-    console.error("AI reply error:", err);
-    res.status(500).json({ error: err.message });
+    console.error("AI ERROR:", err.response?.data || err.message);
+
+    res.status(500).json({
+      error: "AI failed",
+      details: err.response?.data,
+    });
   }
 });
 
