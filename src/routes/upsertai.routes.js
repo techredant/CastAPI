@@ -5,11 +5,16 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
-    // 🔑 Use server keys
+    console.log("🌐 Upserting AI user...");
+
     const serverClient = StreamChat.getInstance(
       process.env.STREAM_API_KEY,
       process.env.STREAM_API_SECRET
     );
+
+    if (!serverClient) {
+      console.error("❌ Stream client not initialized");
+    }
 
     await serverClient.upsertUser({
       id: "ai-assistant",
@@ -18,11 +23,13 @@ router.post("/", async (req, res) => {
       role: "user",
     });
 
+    console.log("✅ AI user upserted");
     return res.json({ success: true });
   } catch (err) {
     console.error("❌ Error recreating AI user:", err);
-    return res.status(500).json({ error: "Failed to recreate AI user" });
+    return res.status(500).json({ message: "Server error", error: err.message });
   }
 });
+
 
 module.exports = router;
