@@ -16,7 +16,7 @@ router.post("/", async (req, res) => {
 
     // 2️⃣ Upsert AI user (recreates if deleted)
     await serverClient.upsertUser({
-      id: "ai-assistant",
+      id: "ai-broadcastke",
       name: "AI Assistant",
       image: "https://i.imgur.com/IC7Zz11.png",
       role: "user",
