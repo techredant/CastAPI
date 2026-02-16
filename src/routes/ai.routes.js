@@ -1,5 +1,13 @@
- const express = require("express");
- const router = express.Router();
+const express = require("express");
+const router = express.Router();
+const { StreamChat } = require("stream-chat");
+
+// Stream server client
+const client = StreamChat.getInstance(
+  process.env.STREAM_API_KEY,
+  process.env.STREAM_API_SECRET
+);
+
 
 router.post("/", async (req, res) => {
   try {
@@ -58,3 +66,4 @@ router.post("/", async (req, res) => {
 });
 
  module.exports = router;
+
