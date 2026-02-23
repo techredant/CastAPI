@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema(
     nickName: { type: String, unique: true },
     image: { type: String },
     accountType: { type: String },
+    companyName: { type: String },
 
     // 🟢 IEBC Location
     county: { type: String },
