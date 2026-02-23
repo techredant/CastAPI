@@ -180,8 +180,6 @@ router.post("/update-image", async (req, res) => {
 
 
 // POST /:clerkId/follow-action/:targetClerkId?action=follow|unfollow
-
-// POST /:clerkId/follow-action/:targetClerkId?action=follow|unfollow
 router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
   try {
     const { clerkId, targetClerkId } = req.params;
