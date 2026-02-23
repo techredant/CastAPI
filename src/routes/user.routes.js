@@ -29,6 +29,7 @@ router.post("/create-user", async (req, res) => {
       lastName,
       image,
       nickName,
+       companyName,
       provider,
       accountType,
     } = req.body;
@@ -44,6 +45,7 @@ router.post("/create-user", async (req, res) => {
       if (lastName) user.lastName = lastName;
       if (nickName) user.nickName = nickName;
       if (image) user.image = image;
+      if (companyName) user.companyName = companyName;
       if (provider) user.provider = provider;
       if (accountType) user.accountType = accountType;
 
@@ -59,6 +61,7 @@ router.post("/create-user", async (req, res) => {
       firstName: firstName || "",
       lastName: lastName || "",
       nickName: nickName || "",
+      companyName: companyName || "",
       image: image || "",
       provider: provider || "clerk",
       accountType: accountType || "Personal Account",
@@ -70,35 +73,42 @@ router.post("/create-user", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 //stream io
 router.post("/create-or-get-user", async (req, res) => {
   try {
     const { clerkId, email, firstName, lastName, nickName, image } = req.body;
 
-    if (!email || !firstName) {
-      return res.status(400).json({ message: "Missing email or firstName" });
+    if (!clerkId) {
+      return res.status(400).json({ message: "Missing clerkId" });
     }
 
     // --- Find or create local user ---
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ clerkId });
+
     if (!user) {
-      const id = clerkId || `user_${Date.now()}`;
-      user = new User({
-        clerkId: id,
-        email,
-        firstName,
+      user = await User.create({
+        clerkId,
+        email: email || "",
+        firstName: firstName || "",
         lastName: lastName || "",
         nickName: nickName || "",
         image: image || "",
       });
-      await user.save();
     }
+
+    // --- Prepare display name ---
+    const displayName =
+      user.nickName ||
+      user.firstName ||
+      user.email ||
+      "User";
 
     // --- Upsert user in Stream ---
     await chatServer.upsertUser({
       id: user.clerkId,
-      name: user.firstName,
-      image: image || undefined,
+      name: displayName,
+      image: user.image || undefined,
     });
 
     // --- Generate tokens ---
@@ -106,9 +116,10 @@ router.post("/create-or-get-user", async (req, res) => {
     const videoToken = await createVideoToken(user.clerkId);
 
     res.json({ user, chatToken, videoToken });
+
   } catch (err) {
     console.error("Error in create-or-get-user:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
