@@ -77,7 +77,7 @@ router.post("/create-user", async (req, res) => {
 //stream io
 router.post("/create-or-get-user", async (req, res) => {
   try {
-    const { clerkId, email, firstName, lastName, nickName, image } = req.body;
+    const { clerkId, email, firstName, lastName, nickName, image, county, constituency, ward } = req.body;
 
     if (!clerkId) {
       return res.status(400).json({ message: "Missing clerkId" });
@@ -94,6 +94,9 @@ router.post("/create-or-get-user", async (req, res) => {
         lastName: lastName || "",
         nickName: nickName || "",
         image: image || "",
+        county: county || "",
+        constituency: constituency || "",
+        ward:  ward || ""
       });
     }
 
@@ -126,26 +129,26 @@ router.post("/create-or-get-user", async (req, res) => {
 
 
 // ------------------- UPDATE USER LOCATION -------------------
-router.post("/update-location", async (req, res) => {
-  try {
-    const { clerkId, county, constituency, ward } = req.body;
+// router.post("/update-location", async (req, res) => {
+//   try {
+//     const { clerkId, county, constituency, ward } = req.body;
 
-    if (!clerkId) {
-      return res.status(400).json({ error: "clerkId required" });
-    }
+//     if (!clerkId) {
+//       return res.status(400).json({ error: "clerkId required" });
+//     }
 
-    const user = await User.findOneAndUpdate(
-      { clerkId },
-      { county, constituency, ward },
-      { new: true }
-    );
+//     const user = await User.findOneAndUpdate(
+//       { clerkId },
+//       { county, constituency, ward },
+//       { new: true }
+//     );
 
-    res.json(user);
-  } catch (error) {
-    console.error("Error updating location:", error);
-    res.status(500).json({ error: "Server error updating location" });
-  }
-});
+//     res.json(user);
+//   } catch (error) {
+//     console.error("Error updating location:", error);
+//     res.status(500).json({ error: "Server error updating location" });
+//   }
+// });
 
 // ------------------- GET USER BY CLERKID -------------------
 router.get("/:clerkId", async (req, res) => {
