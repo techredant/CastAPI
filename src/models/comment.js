@@ -11,7 +11,7 @@ const replySchema = new Schema(
     likes: { type: [String], default: [] }, // array of userIds who liked
     createdAt: { type: Date, default: Date.now },
   },
-  { _id: true } // ✅ ensures each reply has its own ObjectId
+  { _id: true }, // ✅ ensures each reply has its own ObjectId
 );
 
 // ------------------- Comment Schema -------------------
@@ -25,7 +25,7 @@ const commentSchema = new Schema(
     likes: { type: [String], default: [] }, // array of userIds
     replies: { type: [replySchema], default: [] }, // embedded replies
   },
-  { timestamps: true } // adds createdAt & updatedAt
+  { timestamps: true }, // adds createdAt & updatedAt
 );
 
 const Comment =

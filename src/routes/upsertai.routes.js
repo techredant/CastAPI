@@ -11,7 +11,7 @@ router.post("/", async (req, res) => {
     // 1️⃣ Initialize Stream server client
     const serverClient = StreamChat.getInstance(
       process.env.STREAM_API_KEY,
-      process.env.STREAM_API_SECRET
+      process.env.STREAM_API_SECRET,
     );
 
     // 2️⃣ Upsert AI user (recreates if deleted)
@@ -41,7 +41,9 @@ router.post("/", async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Failed to upsert AI + channel:", err);
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
   }
 });
 

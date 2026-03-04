@@ -17,7 +17,7 @@ const categorySchema = new Schema(
       default: "",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // ------------------- Category Model -------------------

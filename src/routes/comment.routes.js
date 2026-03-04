@@ -33,7 +33,6 @@ router.post("/:id/comments", async (req, res) => {
   }
 });
 
-
 // ------------------- Get all Comments for a Post -------------------
 router.get("/:postId", async (req, res) => {
   try {
@@ -113,7 +112,7 @@ router.delete("/:commentId/replies/:replyId", async (req, res) => {
     if (!comment) return res.status(404).json({ message: "Comment not found" });
 
     comment.replies = comment.replies.filter(
-      (r) => r._id.toString() !== replyId
+      (r) => r._id.toString() !== replyId,
     );
 
     await comment.save();
@@ -181,13 +180,12 @@ router.delete("/:commentId", async (req, res) => {
   }
 });
 
-
 router.patch("/:id/views", async (req, res) => {
   try {
     const post = await Post.findByIdAndUpdate(
       req.params.id,
       { $inc: { views: 1 } },
-      { new: true }
+      { new: true },
     );
     if (!post) {
       return res.status(404).json({ message: "Post not found" });

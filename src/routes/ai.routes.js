@@ -8,7 +8,7 @@ const BASE_URL = `https://api.cloudflare.com/client/v4/accounts/${process.env.CL
 
 const streamServer = StreamChat.getInstance(
   process.env.STREAM_API_KEY,
-  process.env.STREAM_API_SECRET
+  process.env.STREAM_API_SECRET,
 );
 
 // 🔥 ensure AI user exists once
@@ -37,7 +37,7 @@ router.post("/chat", async (req, res) => {
           Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     const reply = aiResponse.data.result.response;
@@ -51,7 +51,6 @@ router.post("/chat", async (req, res) => {
     });
 
     res.json({ reply });
-
   } catch (err) {
     console.error("AI ERROR:", err.response?.data || err.message);
 

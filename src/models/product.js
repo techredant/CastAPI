@@ -13,7 +13,7 @@ const productSchema = new mongoose.Schema(
       required: true, // Clerk or Mongo userId
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Re-use model if it exists (for hot reload in dev)

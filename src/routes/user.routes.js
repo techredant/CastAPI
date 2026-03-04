@@ -5,19 +5,16 @@ const User = require("../models/user");
 
 const { StreamChat } = require("stream-chat");
 
-
-
 const router = express.Router();
 
 const chatServer = StreamChat.getInstance(
   process.env.STREAM_API_KEY,
-  process.env.STREAM_API_SECRET
+  process.env.STREAM_API_SECRET,
 );
 
 // const STREAM_VIDEO_API = "https://video.stream-io-api.com/video/v1";
 // const STREAM_VIDEO_KEY = process.env.STREAM_VIDEO_KEY;
 // const STREAM_VIDEO_SECRET = process.env.STREAM_VIDEO_SECRET;
-
 
 // ------------------- CREATE OR UPDATE USER -------------------
 router.post("/create-user", async (req, res) => {
@@ -29,7 +26,7 @@ router.post("/create-user", async (req, res) => {
       lastName,
       image,
       nickName,
-       companyName,
+      companyName,
       provider,
       accountType,
     } = req.body;
@@ -98,11 +95,7 @@ router.post("/create-or-get-user", async (req, res) => {
     }
 
     // --- Prepare display name ---
-    const displayName =
-      user.nickName ||
-      user.firstName ||
-      user.email ||
-      "User";
+    const displayName = user.nickName || user.firstName || user.email || "User";
 
     // --- Upsert user in Stream ---
     await chatServer.upsertUser({
@@ -116,14 +109,11 @@ router.post("/create-or-get-user", async (req, res) => {
     const videoToken = await createVideoToken(user.clerkId);
 
     res.json({ user, chatToken, videoToken });
-
   } catch (err) {
     console.error("Error in create-or-get-user:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
-
-
 
 // ------------------- UPDATE USER LOCATION -------------------
 router.post("/update-location", async (req, res) => {
@@ -137,7 +127,7 @@ router.post("/update-location", async (req, res) => {
     const user = await User.findOneAndUpdate(
       { clerkId },
       { county, constituency, ward },
-      { new: true }
+      { new: true },
     );
 
     res.json(user);
@@ -175,7 +165,7 @@ router.post("/update-image", async (req, res) => {
     const user = await User.findOneAndUpdate(
       { clerkId },
       { image },
-      { new: true }
+      { new: true },
     );
 
     if (!user) {
@@ -188,7 +178,6 @@ router.post("/update-image", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 
 // POST /:clerkId/follow-action/:targetClerkId?action=follow|unfollow
 router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
@@ -235,7 +224,10 @@ router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
 
     res.json({
       success: true,
-      message: action === "follow" ? "Followed successfully" : "Unfollowed successfully",
+      message:
+        action === "follow"
+          ? "Followed successfully"
+          : "Unfollowed successfully",
       target,
     });
   } catch (error) {

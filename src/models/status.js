@@ -12,7 +12,7 @@ const statusSchema = new mongoose.Schema(
     likes: [{ type: String }],
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Status = mongoose.models.Status || mongoose.model("Status", statusSchema);
