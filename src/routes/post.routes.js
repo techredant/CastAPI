@@ -671,98 +671,20 @@ module.exports = (io) => {
     }
   });
 
-  // =========================
-  // VIEW
-  // =========================
-  router.post("/:id/view", async (req, res) => {
-    try {
-      const post = await Post.findByIdAndUpdate(
-        req.params.id,
-        { $inc: { views: 1 } },
-        { new: true },
-      );
+router.post("/:id/engagement", async (req, res) => {
+  const { type } = req.body; // "view" | "recast" | "recite"
 
-      io.emit("post_updated", {
-        postId: post._id,
-        views: post.views,
-      });
+  const update = {};
+  if (type === "view") update.$inc = { views: 1 };
+  if (type === "recast") update.$inc = { recastCount: 1 };
+  if (type === "recite") update.$inc = { reciteCount: 1 };
 
-      res.json(post);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
+  const post = await Post.findByIdAndUpdate(req.params.id, update, {
+    new: true,
   });
 
-  // =========================
-  // RECAST (TOGGLE)
-  // =========================
-  router.post("/:id/recast", async (req, res) => {
-    try {
-      const { userId, nickname } = req.body;
-
-      const post = await Post.findById(req.params.id);
-      if (!post) return res.status(404).json({ message: "Not found" });
-
-      if (!Array.isArray(post.recasts)) post.recasts = [];
-
-      const index = post.recasts.findIndex((r) => r.userId === userId);
-
-      if (index >= 0) {
-        post.recasts.splice(index, 1);
-      } else {
-        post.recasts.push({
-          userId,
-          nickname,
-          createdAt: new Date(),
-        });
-      }
-
-      await post.save();
-
-      io.emit("post_updated", {
-        postId: post._id,
-        recasts: post.recasts,
-        recastCount: post.recasts.length,
-      });
-
-      res.json(post);
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
-  });
-
-  // =========================
-  // RECITE (QUOTE POST)
-  // =========================
-  router.post("/:id/recite", async (req, res) => {
-    try {
-      const { userId, quoteText, nickname } = req.body;
-
-      const post = await Post.findById(req.params.id);
-      if (!post) return res.status(404).json({ message: "Not found" });
-
-      if (!Array.isArray(post.recites)) post.recites = [];
-
-      post.recites.push({
-        userId,
-        nickname,
-        quote: quoteText,
-        createdAt: new Date(),
-      });
-
-      await post.save();
-
-      io.emit("post_updated", {
-        postId: post._id,
-        recites: post.recites,
-        reciteCount: post.recites.length,
-      });
-
-      res.json(post);
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
-  });
+  res.json(post);
+});
 
   // =========================
   // DELETE
