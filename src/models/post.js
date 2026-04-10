@@ -40,6 +40,7 @@ const postSchema = new mongoose.Schema(
       lastName: String,
       nickName: String,
       image: String,
+      accountType: String,
     },
 
     type: { type: String, default: "post" }, // "post" | "recast" | "recite"
