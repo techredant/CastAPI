@@ -126,7 +126,7 @@ router.post("/update-location", async (req, res) => {
 
     const user = await User.findOneAndUpdate(
       { clerkId },
-      { county, constituency, ward, home },
+      { county, constituency, ward },
       { new: true },
     );
 
