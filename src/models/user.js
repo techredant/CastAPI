@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
     companyName: { type: String },
 
     // 🟢 IEBC Location
+    home: { type: String, default: "Home"},
     county: { type: String },
     constituency: { type: String },
     ward: { type: String },
