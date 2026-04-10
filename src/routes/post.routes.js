@@ -488,7 +488,7 @@ module.exports = (io) => {
     }
   });
 
- router.get("/", async (req, res) => {
+  router.get("/", async (req, res) => {
     try {
       const { levelType, levelValue } = req.query;
 
@@ -639,6 +639,52 @@ module.exports = (io) => {
     }
   });
 
+  // ✅ New simplified recite route (recast with optional quote)
+    router.post("/:id/recite", async (req, res) => {
+      try {
+        const { userId, quoteText, nickname } = req.body;
+        const { id } = req.params;
+
+        if (!userId)
+          return res.status(400).json({ message: "userId is required" });
+
+        const post = await Post.findById(id);
+        if (!post) return res.status(404).json({ message: "Post not found" });
+
+        // ✅ Ensure recasts array exists
+        if (!Array.isArray(post.recites)) post.recites = [];
+
+        // Check if already recasted by this user (toggle if no quote)
+        const existingIndex = post.recites.findIndex(
+          (r) => r.userId === userId && !r.quote,
+        );
+
+        if (existingIndex >= 0 && !quoteText) {
+          post.recites.splice(existingIndex, 1);
+        } else {
+          post.recites.push({
+            userId,
+            nickname: nickname || "Anonymous",
+            quote: quoteText || "",
+            recastedAt: new Date(),
+          });
+        }
+
+        await post.save();
+
+        const io = req.app.get("io");
+        io.emit("postUpdated", post);
+
+        res.status(200).json(post);
+      } catch (err) {
+        console.error("🔥 /recite error:", err);
+        console.error(err.stack); // very useful
+        res
+          .status(500)
+          .json({ message: "Error reciting post", error: err.message });
+      }
+    });
+
   // =========================
   // LIKE / UNLIKE
   // =========================
@@ -671,20 +717,20 @@ module.exports = (io) => {
     }
   });
 
-router.post("/:id/engagement", async (req, res) => {
-  const { type } = req.body; // "view" | "recast" | "recite"
+  router.post("/:id/engagement", async (req, res) => {
+    const { type } = req.body; // "view" | "recast" | "recite"
 
-  const update = {};
-  if (type === "view") update.$inc = { views: 1 };
-  if (type === "recast") update.$inc = { recastCount: 1 };
-  if (type === "recite") update.$inc = { reciteCount: 1 };
+    const update = {};
+    if (type === "view") update.$inc = { views: 1 };
+    if (type === "recast") update.$inc = { recastCount: 1 };
+    if (type === "recite") update.$inc = { reciteCount: 1 };
 
-  const post = await Post.findByIdAndUpdate(req.params.id, update, {
-    new: true,
+    const post = await Post.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+    });
+
+    res.json(post);
   });
-
-  res.json(post);
-});
 
   // =========================
   // DELETE
