@@ -136,6 +136,7 @@ router.post("/token", async (req, res) => {
     });
   }
 });
+
 router.post("/video-token", async (req, res) => {
   const { userId } = req.body;
   if (!userId) {
