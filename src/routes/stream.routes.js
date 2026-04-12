@@ -15,7 +15,7 @@ const serverClient = StreamChat.getInstance(
  * Creates (or updates) a Stream user and returns a chat token
  */
 router.post("/token", async (req, res) => {
-  const { userId, name, image } = req.body;
+  const { userId, name, image, isHost } = req.body;
 
   if (!userId) {
     return res.status(400).json({
@@ -25,15 +25,16 @@ router.post("/token", async (req, res) => {
   }
 
   try {
-    // Upsert user in Stream (creates if not exists)
     await serverClient.upsertUser({
       id: userId,
       name: name || "User",
       image: image || undefined,
     });
 
-    // Generate Stream token
-    const token = serverClient.createToken(userId);
+    // ✅ KEY FIX: assign role
+    const token = serverClient.createToken(userId, undefined, undefined, {
+      role: isHost ? "admin" : "user",
+    });
 
     return res.status(200).json({
       ok: true,
