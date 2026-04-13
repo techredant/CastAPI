@@ -43,8 +43,8 @@ io.on("connection", (socket) => {
 const userRoutes = require("./routes/user.routes");
 const postRoutes = require("./routes/post.routes")(io);
 const productRoutes = require("./routes/product.routes");
-const aiRoutes = require("./routes/ai.routes");
-const upsertRoutes = require("./routes/upsertai.routes");
+// const aiRoutes = require("./routes/ai.routes");
+// const upsertRoutes = require("./routes/upsertai.routes");
 
 // const streamRoutes = require("./routes/stream.routes");
 
@@ -57,8 +57,8 @@ app.use("/api/products", productRoutes);
 
 // app.use("/api/stream", streamRoutes);
 
-app.use("/api/ai", aiRoutes);
-app.use("/api/upsert-ai", upsertRoutes);
+// app.use("/api/ai", aiRoutes);
+// app.use("/api/upsert-ai", upsertRoutes);
 
 app.use("/api", comentRoutes);
 
