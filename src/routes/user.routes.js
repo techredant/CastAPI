@@ -239,16 +239,35 @@ router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
 // ------------------- GET ALL USERS -------------------
 router.get("/", async (req, res) => {
   try {
-    const { clerkId } = req.query; // 👈 current logged-in user's Clerk ID (optional)
+    const { clerkId, search } = req.query;
 
-    const users = await User.find();
+    let filter = {};
 
-    // If no logged-in user provided, return all users
+    // -------------------
+    // SEARCH (only if provided)
+    // -------------------
+    if (search && search.trim() !== "") {
+      filter = {
+        $or: [
+          { firstName: { $regex: search, $options: "i" } },
+          { lastName: { $regex: search, $options: "i" } },
+          { nickName: { $regex: search, $options: "i" } },
+        ],
+      };
+    }
+
+    // -------------------
+    // FETCH USERS (ALL or FILTERED)
+    // -------------------
+    const users = await User.find(filter).limit(50);
+
+    // -------------------
+    // OPTIONAL: FOLLOW LOGIC
+    // -------------------
     if (!clerkId) {
       return res.json(users);
     }
 
-    // Get the current user for following info
     const currentUser = await User.findOne({ clerkId });
 
     const data = users.map((u) => ({
