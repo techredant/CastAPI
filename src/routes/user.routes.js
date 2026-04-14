@@ -236,42 +236,49 @@ router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
   }
 });
 
-// ------------------- GET ALL USERS -------------------
+
 router.get("/", async (req, res) => {
   try {
-    const { clerkId, search } = req.query;
+    const { clerkId, cursor } = req.query;
 
-    let filter = {};
+    const limit = 20;
 
-    // -------------------
-    // SEARCH (only if provided)
-    // -------------------
-    if (search && search.trim() !== "") {
-      filter = {
-        $or: [
-          { firstName: { $regex: search, $options: "i" } },
-          { lastName: { $regex: search, $options: "i" } },
-          { nickName: { $regex: search, $options: "i" } },
-        ],
-      };
+    // ---------------------------
+    // FILTER
+    // ---------------------------
+    const filter = {
+      ...(clerkId && { clerkId: { $ne: clerkId } }), // exclude self
+    };
+
+    // ---------------------------
+    // PAGINATION (cursor-based)
+    // ---------------------------
+    if (cursor) {
+      filter._id = { $lt: new mongoose.Types.ObjectId(cursor) };
     }
 
-    // -------------------
-    // FETCH USERS (ALL or FILTERED)
-    // -------------------
-    const users = await User.find(filter).limit(50);
+    // ---------------------------
+    // FETCH USERS (DISCOVERY)
+    // ---------------------------
+    const users = await User.find(filter)
+      .sort({ _id: -1 }) // newest users first
+      .limit(limit)
+      .select(
+        "clerkId firstName lastName nickName image county constituency ward followers following",
+      );
 
-    // -------------------
-    // OPTIONAL: FOLLOW LOGIC
-    // -------------------
-    if (!clerkId) {
-      return res.json(users);
-    }
+    // ---------------------------
+    // CURRENT USER (optional)
+    // ---------------------------
+    const currentUser = clerkId
+      ? await User.findOne({ clerkId }).select("following")
+      : null;
 
-    const currentUser = await User.findOne({ clerkId });
-
-    const data = users.map((u) => ({
-      _id: u._id,
+    // ---------------------------
+    // FORMAT RESPONSE
+    // ---------------------------
+    const formatted = users.map((u) => ({
+      id: u._id,
       clerkId: u.clerkId,
       firstName: u.firstName,
       lastName: u.lastName,
@@ -280,15 +287,106 @@ router.get("/", async (req, res) => {
       county: u.county,
       constituency: u.constituency,
       ward: u.ward,
-      followers: u.followers,
-      following: u.following,
       isFollowing: currentUser?.following?.includes(u.clerkId) || false,
     }));
 
-    res.json(data);
+    // ---------------------------
+    // NEXT CURSOR
+    // ---------------------------
+    const nextCursor =
+      users.length === limit ? users[users.length - 1]._id : null;
+
+    res.json({
+      users: formatted,
+      nextCursor,
+    });
   } catch (err) {
     console.error("Error fetching users:", err);
     res.status(500).json({ error: "Server error fetching users" });
+  }
+});
+
+
+// ------------------- SEARCH USER -------------------
+
+router.get("/search", async (req, res) => {
+  try {
+    const { query, clerkId, cursor } = req.query;
+
+    // ---------------------------
+    // VALIDATION
+    // ---------------------------
+    if (!query || query.trim() === "") {
+      return res.json({
+        users: [],
+        nextCursor: null,
+      });
+    }
+
+    const limit = 20;
+
+    // ---------------------------
+    // BASE FILTER
+    // ---------------------------
+    const filter = {
+      ...(clerkId && { clerkId: { $ne: clerkId } }),
+      $text: { $search: query },
+    };
+
+    // ---------------------------
+    // PAGINATION (cursor-based)
+    // ---------------------------
+    if (cursor) {
+      filter._id = { $lt: cursor }; // infinite scroll
+    }
+
+    // ---------------------------
+    // QUERY
+    // ---------------------------
+    const users = await User.find(filter, {
+      score: { $meta: "textScore" },
+    })
+      .sort({ score: { $meta: "textScore" }, _id: -1 })
+      .limit(limit);
+
+    // ---------------------------
+    // CURRENT USER (optional)
+    // ---------------------------
+    let currentUser = null;
+
+    if (clerkId) {
+      currentUser = await User.findOne({ clerkId }).select("following");
+    }
+
+    // ---------------------------
+    // FORMAT RESPONSE
+    // ---------------------------
+    const formatted = users.map((u) => ({
+      id: u._id,
+      clerkId: u.clerkId,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      nickName: u.nickName,
+      image: u.image,
+      county: u.county,
+      constituency: u.constituency,
+      ward: u.ward,
+      isFollowing: currentUser?.following?.includes(u.clerkId) || false,
+    }));
+
+    // ---------------------------
+    // NEXT CURSOR
+    // ---------------------------
+    const nextCursor =
+      users.length === limit ? users[users.length - 1]._id : null;
+
+    res.json({
+      users: formatted,
+      nextCursor,
+    });
+  } catch (err) {
+    console.error("Search error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
