@@ -97,10 +97,20 @@ router.post("/token", async (req, res) => {
       return res.status(400).json({ ok: false, error: "Missing userId" });
     }
 
+    // ✅ First ensure user exists
     await serverClient.upsertUser({
       id: userId,
       name: name || "User",
       image: image || undefined,
+    });
+
+    // 🔥 THEN force update (this fixes your issue)
+    await serverClient.partialUpdateUser({
+      id: userId,
+      set: {
+        name: name || "User",
+        image: image || undefined,
+      },
     });
 
     const token = serverClient.createToken(userId);
