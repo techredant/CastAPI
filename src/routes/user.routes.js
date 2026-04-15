@@ -178,7 +178,6 @@ router.post("/update-image", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 // POST /:clerkId/follow-action/:targetClerkId?action=follow|unfollow
 router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
   try {
@@ -200,42 +199,41 @@ router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Convert to ObjectIds
-    const userIdObj = user._id;
-    const targetIdObj = target._id;
-
+    // ---------------- FOLLOW ----------------
     if (action === "follow") {
-      // Only add if not already present
-      if (!target.followers.some((id) => id.equals(userIdObj))) {
-        target.followers.push(userIdObj);
+      if (!target.followers.includes(clerkId)) {
+        target.followers.push(clerkId);
       }
-      if (!user.following.some((id) => id.equals(targetIdObj))) {
-        user.following.push(targetIdObj);
+
+      if (!user.following.includes(targetClerkId)) {
+        user.following.push(targetClerkId);
       }
     }
 
+    // ---------------- UNFOLLOW ----------------
     if (action === "unfollow") {
-      target.followers = target.followers.filter((id) => !id.equals(userIdObj));
-      user.following = user.following.filter((id) => !id.equals(targetIdObj));
+      target.followers = target.followers.filter(
+        (id) => id !== clerkId
+      );
+
+      user.following = user.following.filter(
+        (id) => id !== targetClerkId
+      );
     }
 
     await target.save();
     await user.save();
 
-    res.json({
+    return res.json({
       success: true,
-      message:
-        action === "follow"
-          ? "Followed successfully"
-          : "Unfollowed successfully",
+      message: action === "follow" ? "Followed" : "Unfollowed",
       target,
     });
   } catch (error) {
-    console.error("Error in follow-action:", error);
+    console.error("Follow error:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
-
 
 router.get("/", async (req, res) => {
   try {
