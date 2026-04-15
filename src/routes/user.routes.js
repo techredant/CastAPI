@@ -342,15 +342,16 @@ router.get("/search", async (req, res) => {
       currentUser = await User.findOne({ clerkId }).select("following");
     }
 
-    const formatted = users.map((u) => ({
-      id: u._id,
-      clerkId: u.clerkId,
-      firstName: u.firstName,
-      lastName: u.lastName,
-      nickName: u.nickName,
-      image: u.image,
-      isFollowing: currentUser?.following?.includes(u.clerkId) || false,
-    }));
+   const formatted = users.map((u) => ({
+     id: u._id,
+     clerkId: u.clerkId,
+     name:
+       `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() ||
+       u.nickName ||
+       "Unknown User",
+     image: u.image,
+     isFollowing: currentUser?.following?.includes(u.clerkId) || false,
+   }));
 
     const nextCursor =
       users.length === limit ? users[users.length - 1]._id : null;
