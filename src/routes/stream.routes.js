@@ -91,7 +91,7 @@ const serverClient = StreamChat.getInstance(
 
 router.post("/token", async (req, res) => {
   try {
-    const { userId, name, image } = req.body;
+    const { userId, name, nickname, image } = req.body;
 
     if (!userId) {
       return res.status(400).json({ ok: false, error: "Missing userId" });
@@ -101,6 +101,7 @@ router.post("/token", async (req, res) => {
     await serverClient.upsertUser({
       id: userId,
       name: name || "User",
+      nickname: nickname,
       image: image || undefined,
     });
 
@@ -109,6 +110,7 @@ router.post("/token", async (req, res) => {
       id: userId,
       set: {
         name: name || "User",
+        nickname: nickname,
         image: image || undefined,
       },
     });
