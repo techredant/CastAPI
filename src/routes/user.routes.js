@@ -178,7 +178,7 @@ router.post("/update-image", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
+// POST /:clerkId/follow-action/:targetClerkId?action=follow|unfollow
 router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
   try {
     const { clerkId, targetClerkId } = req.params;
@@ -199,10 +199,6 @@ router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // 🔥 FIX: ensure arrays exist
-    if (!Array.isArray(user.following)) user.following = [];
-    if (!Array.isArray(target.followers)) target.followers = [];
-
     // ---------------- FOLLOW ----------------
     if (action === "follow") {
       if (!target.followers.includes(clerkId)) {
@@ -216,9 +212,13 @@ router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
 
     // ---------------- UNFOLLOW ----------------
     if (action === "unfollow") {
-      target.followers = target.followers.filter((id) => id !== clerkId);
+      target.followers = target.followers.filter(
+        (id) => id !== clerkId
+      );
 
-      user.following = user.following.filter((id) => id !== targetClerkId);
+      user.following = user.following.filter(
+        (id) => id !== targetClerkId
+      );
     }
 
     await target.save();
@@ -227,13 +227,11 @@ router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
     return res.json({
       success: true,
       message: action === "follow" ? "Followed" : "Unfollowed",
+      target,
     });
   } catch (error) {
-    console.error("❌ Follow error FULL:", error); // IMPORTANT
-    return res.status(500).json({
-      error: "Server error",
-      details: error.message,
-    });
+    console.error("Follow error:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
