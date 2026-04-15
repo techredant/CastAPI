@@ -91,29 +91,22 @@ const serverClient = StreamChat.getInstance(
 
 router.post("/token", async (req, res) => {
   try {
-    const { userId, name, nickname, image } = req.body;
+    const { userId, name, image } = req.body;
 
     if (!userId) {
       return res.status(400).json({ ok: false, error: "Missing userId" });
     }
 
-    // ✅ First ensure user exists
-    await serverClient.upsertUser({
-      id: userId,
-      name: name || "User",
-      nickname: nickname,
-      image: image || undefined,
-    });
+await serverClient.upsertUser({
+  id: userId,
+  name,
+  image,
+});
 
-    // 🔥 THEN force update (this fixes your issue)
-    await serverClient.partialUpdateUser({
-      id: userId,
-      set: {
-        name: name || "User",
-        nickname: nickname,
-        image: image || undefined,
-      },
-    });
+await serverClient.partialUpdateUser({
+  id: userId,
+  set: { name, image },
+});
 
     const token = serverClient.createToken(userId);
 
