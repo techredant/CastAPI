@@ -194,6 +194,14 @@ router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
 
     const user = await User.findOne({ clerkId });
     const target = await User.findOne({ clerkId: targetClerkId });
+    
+    if (!user || !target) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // ✅ CRITICAL FIX
+    user.following = user.following || [];
+    target.followers = target.followers || [];
 
     if (!user || !target) {
       return res.status(404).json({ error: "User not found" });

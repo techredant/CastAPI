@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
     companyName: { type: String },
 
     // 🟢 IEBC Location
-    home: { type: String, default: "Home"},
+    home: { type: String, default: "Home" },
     county: { type: String },
     constituency: { type: String },
     ward: { type: String },
@@ -24,8 +24,14 @@ const userSchema = new mongoose.Schema(
     provider: { type: String, default: "clerk" },
 
     // ✅ Clerk IDs instead of ObjectIds
-    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    followers: {
+      type: [String],
+      default: [],
+    },
+    following: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true },
 );
