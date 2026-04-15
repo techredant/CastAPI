@@ -201,13 +201,16 @@ router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
 
     // ---------------- FOLLOW ----------------
     if (action === "follow") {
-      if (!target.followers.includes(clerkId)) {
-        target.followers.push(clerkId);
-      }
+     if (!target.followers) target.followers = [];
 
-      if (!user.following.includes(targetClerkId)) {
-        user.following.push(targetClerkId);
-      }
+     if (!target.followers.includes(clerkId)) {
+       target.followers.push(clerkId);
+     }
+        if (!user.following) user.following = [];
+
+        if (!user.following.includes(targetClerkId)) {
+          user.following.push(targetClerkId);
+        }
     }
 
     // ---------------- UNFOLLOW ----------------
@@ -229,10 +232,10 @@ router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
       message: action === "follow" ? "Followed" : "Unfollowed",
       target,
     });
-  } catch (error) {
-    console.error("Follow error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
+   } catch (error) {
+  console.error("Follow error FULL:", error);
+  res.status(500).json({ error: error.message });
+}
 });
 
 router.get("/", async (req, res) => {
