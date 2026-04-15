@@ -308,14 +308,10 @@ router.get("/", async (req, res) => {
 
 
 // ------------------- SEARCH USER -------------------
-
 router.get("/search", async (req, res) => {
   try {
     const { query, clerkId, cursor } = req.query;
 
-    // ---------------------------
-    // VALIDATION
-    // ---------------------------
     if (!query || query.trim() === "") {
       return res.json({
         users: [],
@@ -325,42 +321,27 @@ router.get("/search", async (req, res) => {
 
     const limit = 20;
 
-    // ---------------------------
-    // BASE FILTER
-    // ---------------------------
     const filter = {
       ...(clerkId && { clerkId: { $ne: clerkId } }),
-      $text: { $search: query },
+      $or: [
+        { firstName: { $regex: query, $options: "i" } },
+        { lastName: { $regex: query, $options: "i" } },
+        { nickName: { $regex: query, $options: "i" } },
+      ],
     };
 
-    // ---------------------------
-    // PAGINATION (cursor-based)
-    // ---------------------------
     if (cursor) {
-      filter._id = { $lt: cursor }; // infinite scroll
+      filter._id = { $lt: cursor };
     }
 
-    // ---------------------------
-    // QUERY
-    // ---------------------------
-    const users = await User.find(filter, {
-      score: { $meta: "textScore" },
-    })
-      .sort({ score: { $meta: "textScore" }, _id: -1 })
-      .limit(limit);
+    const users = await User.find(filter).sort({ _id: -1 }).limit(limit);
 
-    // ---------------------------
-    // CURRENT USER (optional)
-    // ---------------------------
     let currentUser = null;
 
     if (clerkId) {
       currentUser = await User.findOne({ clerkId }).select("following");
     }
 
-    // ---------------------------
-    // FORMAT RESPONSE
-    // ---------------------------
     const formatted = users.map((u) => ({
       id: u._id,
       clerkId: u.clerkId,
@@ -368,15 +349,9 @@ router.get("/search", async (req, res) => {
       lastName: u.lastName,
       nickName: u.nickName,
       image: u.image,
-      county: u.county,
-      constituency: u.constituency,
-      ward: u.ward,
       isFollowing: currentUser?.following?.includes(u.clerkId) || false,
     }));
 
-    // ---------------------------
-    // NEXT CURSOR
-    // ---------------------------
     const nextCursor =
       users.length === limit ? users[users.length - 1]._id : null;
 
