@@ -70,7 +70,7 @@ module.exports = (io) => {
       return res.status(201).json(newPost);
     } catch (err) {
       console.error("❌ Error creating post:", err);
-      return res.status(500).json({ message: "Server error" });
+      return res.status(500).json({ message: "Server error", err });
     }
   });
 
