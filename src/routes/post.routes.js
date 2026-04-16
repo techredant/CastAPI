@@ -54,7 +54,7 @@ module.exports = (io) => {
           nickName: user.nickName,
           image: user.image,
           accountType: user.accountType,
-          following: user.following
+          // following: user.following
         },
         reciteFirstName: originalPost?.user?.firstName || "",
         reciteLastName: originalPost?.user?.lastName || "",

@@ -41,7 +41,6 @@ const postSchema = new mongoose.Schema(
       nickName: String,
       image: String,
       accountType: String,
-      following: String
     },
 
     type: { type: String, default: "post" }, // "post" | "recast" | "recite"
