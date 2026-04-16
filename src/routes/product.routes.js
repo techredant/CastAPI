@@ -7,7 +7,7 @@ const router = express.Router();
 // ------------------- Create Product -------------------
 router.post("/", async (req, res) => {
   try {
-    const { title, price, description, images, category, userId } = req.body;
+    const { title, price, phoneNumber, description, images, category, userId } = req.body;
 
     if (!title || !price || !description || !images || !category || !userId) {
       return res.status(400).json({ message: "All fields are required" });
@@ -20,6 +20,7 @@ router.post("/", async (req, res) => {
       images,
       category,
       userId,
+      phoneNumber
     });
 
     res.status(201).json(newProduct);
@@ -59,11 +60,12 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, price, description, images, category } = req.body;
+    const { title, price, description, images, category, phoneNumber } =
+      req.body;
 
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
-      { title, price, description, images, category },
+      { title, price, description, images, category, phoneNumber },
       { new: true, runValidators: true },
     );
 
