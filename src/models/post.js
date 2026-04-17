@@ -1,20 +1,37 @@
-// models/post.js
-const mongoose = require("mongoose");
-
 const postSchema = new mongoose.Schema(
   {
-    userId: { type: String, required: true }, // creator of the post/recite/recast
+    userId: { type: String, required: true },
+
     caption: String,
-    media: [String], // images/videos
-    reciteMedia: [String], // optional media from recite
+
+    // ✅ media
+    media: {
+      type: [String],
+      default: [],
+    },
+
+    reciteMedia: {
+      type: [String],
+      default: [],
+    },
+
+    // ✅ NEW (important)
+    contentType: {
+      type: String,
+      enum: ["text", "media"],
+      default: "text",
+      index: true,
+    },
+
     levelType: String,
     levelValue: String,
-    quote: { type: String, default: "" }, // optional quote
-    linkPreview: Object, // optional link preview
-    likes: { type: [String], default: [] },
-    isDeleted: { type: Boolean, default: false },
 
-    // Link to the root/original post
+    quote: { type: String, default: "" },
+    linkPreview: Object,
+
+    likes: { type: [String], default: [] },
+    isDeleted: { type: Boolean, default: false, index: true },
+
     originalPostId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Post",
@@ -27,13 +44,11 @@ const postSchema = new mongoose.Schema(
     reciteCount: { type: Number, default: 0 },
     recastCount: { type: Number, default: 0 },
 
-    // Optional info if recited or recast
     reciteFirstName: String,
     reciteLastName: String,
     reciteNickName: String,
     reciteImage: String,
 
-    // User info of the person who created this post
     user: {
       clerkId: String,
       firstName: String,
@@ -43,9 +58,21 @@ const postSchema = new mongoose.Schema(
       accountType: String,
     },
 
-    type: { type: String, default: "post" }, // "post" | "recast" | "recite"
+    // ✅ post behavior (keep this separate)
+    type: {
+      type: String,
+      enum: ["post", "recast", "recite"],
+      default: "post",
+      index: true,
+    },
   },
   { timestamps: true },
 );
 
-module.exports = mongoose.model("Post", postSchema);
+
+postSchema.index({
+  contentType: 1,
+  levelType: 1,
+  levelValue: 1,
+  createdAt: -1,
+});

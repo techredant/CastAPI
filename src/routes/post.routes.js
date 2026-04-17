@@ -23,6 +23,7 @@ module.exports = (io) => {
         levelType,
         levelValue,
         type,
+        contentType
       } = req.body;
       if (!userId)
         return res.status(400).json({ message: "userId is required" });
@@ -37,16 +38,23 @@ module.exports = (io) => {
           return res.status(404).json({ message: "Original post not found" });
       }
 
+      const cleanMedia = Array.isArray(media)
+        ? media.filter((m) => typeof m === "string" && m.trim() !== "")
+        : [];
+
+      const computedContentType = cleanMedia.length > 0 ? "media" : "text";
+
       const newPost = new Post({
         userId,
         caption: caption || originalPost?.caption || "",
-        media: media || originalPost?.media || [],
+        media: cleanMedia.length ? cleanMedia : originalPost?.media || [],
         reciteMedia: originalPost?.media || [],
         levelType: originalPost?.levelType || levelType,
         levelValue: originalPost?.levelValue || levelValue,
         quote: quote || originalPost?.quote || null,
         originalPostId: originalPostId || null,
         type: type || "post",
+        contentType: computedContentType,
         user: {
           clerkId: user.clerkId,
           firstName: user.firstName,
@@ -54,7 +62,6 @@ module.exports = (io) => {
           nickName: user.nickName,
           image: user.image,
           accountType: user.accountType,
-          // following: user.following
         },
         reciteFirstName: originalPost?.user?.firstName || "",
         reciteLastName: originalPost?.user?.lastName || "",
@@ -135,6 +142,12 @@ module.exports = (io) => {
         levelType: { $in: levelTypes },
       };
 
+      const { type } = req.query;
+
+      // ✅ media filter (clean)
+      if (type === "media") {
+        query.contentType = "media";
+      }
       if (levelValues) {
         query.levelValue = { $in: levelValues };
       }
