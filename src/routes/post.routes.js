@@ -54,7 +54,6 @@ module.exports = (io) => {
           nickName: user.nickName,
           image: user.image,
           accountType: user.accountType,
-          // following: user.following
         },
         reciteFirstName: originalPost?.user?.firstName || "",
         reciteLastName: originalPost?.user?.lastName || "",
@@ -66,7 +65,7 @@ module.exports = (io) => {
 
       const room = getRoomName(newPost.levelType, newPost.levelValue);
       io.to(room).emit("newPost", newPost);
-      io.to(room).emit("postUpdated", updatedPost);
+      io.to(room).emit("postUpdated", newPost);
       return res.status(201).json(newPost);
     } catch (err) {
       console.error("❌ Error creating post:", err);
