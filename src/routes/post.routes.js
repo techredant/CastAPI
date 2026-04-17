@@ -66,7 +66,7 @@ module.exports = (io) => {
 
       const room = getRoomName(newPost.levelType, newPost.levelValue);
       io.to(room).emit("newPost", newPost);
-
+      io.to(room).emit("postUpdated", updatedPost);
       return res.status(201).json(newPost);
     } catch (err) {
       console.error("❌ Error creating post:", err);
