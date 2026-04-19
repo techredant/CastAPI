@@ -1,6 +1,7 @@
 const express = require("express");
 const Comment = require("../models/comment");
 const Post = require("../models/post");
+const User = require("../models/user");
 
 const router = express.Router();
 
@@ -9,17 +10,24 @@ router.post("/:id/comments", async (req, res) => {
   try {
     const { userId, userName, text, image } = req.body;
     const postId = req.params.id; // get from URL
-
+const user = await User.findOne({ clerkId: userId });
     if (!postId || !userId || !text || !image) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+          
+    
 
     const newComment = await Comment.create({
       postId,
       userId,
-      userName: userName || "Anonymous",
       text,
-      image: image,
+       user: {
+          clerkId: user.clerkId,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          nickName: user.nickName,
+          image: user.image,
+       },
       likes: [],
       createdAt: new Date(),
     });
