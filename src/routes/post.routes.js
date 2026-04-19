@@ -1,7 +1,7 @@
 const express = require("express");
 const Post = require("../models/post");
 const User = require("../models/user");
-const Notification = require("../models/notification");
+const Notification = require("../models/notifications");
 
 module.exports = (io) => {
   const router = express.Router();
