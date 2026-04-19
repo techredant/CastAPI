@@ -6,6 +6,10 @@ const Post = require("../models/post");
 
 const { StreamChat } = require("stream-chat");
 
+module.exports = (io) => {
+  const express = require("express");
+  const router = express.Router();
+
 const router = express.Router();
 
 const chatServer = StreamChat.getInstance(
@@ -64,7 +68,7 @@ router.post("/create-user", async (req, res) => {
    );
 
    // 🔥 SOCKET EMIT (MUST BE BEFORE RETURN)
-   io.emit("userUpdated", {
+   io?.emit?.("userUpdated", {
      clerkId,
      firstName: user.firstName,
      lastName: user.lastName,
@@ -401,5 +405,5 @@ router.get("/search", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
-module.exports = router;
+return router;
+}

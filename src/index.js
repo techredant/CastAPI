@@ -40,7 +40,7 @@ io.on("connection", (socket) => {
   });
 });
 
-const userRoutes = require("./routes/user.routes");
+const userRoutes = require("./routes/user.routes")(io);
 const postRoutes = require("./routes/post.routes")(io);
 const productRoutes = require("./routes/product.routes");
 // const aiRoutes = require("./routes/ai.routes");
