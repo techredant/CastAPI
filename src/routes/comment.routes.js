@@ -8,15 +8,13 @@ const router = express.Router();
 // ------------------- Create a Comment -------------------
 router.post("/:id/comments", async (req, res) => {
   try {
-    const { userId, userName, text, image } = req.body;
+    const { userId,  text, image } = req.body;
     const postId = req.params.id; // get from URL
 const user = await User.findOne({ clerkId: userId });
-    if (!postId || !userId || !text || !image) {
+    if ( !userId || !text ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
           
-    
-
     const newComment = await Comment.create({
       postId,
       userId,
