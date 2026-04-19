@@ -283,31 +283,29 @@ router.get("/", async (req, res) => {
     const limit = 20;
 
     // ---------------------------
-    // FILTER
+    // FILTER (NO EXCLUSION OF SELF)
     // ---------------------------
-    const filter = {
-      ...(clerkId && { clerkId: { $ne: clerkId } }), // exclude self
-    };
+    const filter = {};
 
     // ---------------------------
-    // PAGINATION (cursor-based)
+    // PAGINATION
     // ---------------------------
     if (cursor) {
       filter._id = { $lt: new mongoose.Types.ObjectId(cursor) };
     }
 
     // ---------------------------
-    // FETCH USERS (DISCOVERY)
+    // FETCH USERS
     // ---------------------------
     const users = await User.find(filter)
-      .sort({ _id: -1 }) // newest users first
+      .sort({ _id: -1 })
       .limit(limit)
       .select(
         "clerkId firstName lastName nickName image county constituency ward followers following",
       );
 
     // ---------------------------
-    // CURRENT USER (optional)
+    // CURRENT USER
     // ---------------------------
     const currentUser = clerkId
       ? await User.findOne({ clerkId }).select("following")
