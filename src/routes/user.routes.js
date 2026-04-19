@@ -37,21 +37,47 @@ router.post("/create-user", async (req, res) => {
 
     let user = await User.findOne({ clerkId });
 
-    if (user) {
-      if (firstName) user.firstName = firstName;
-      if (lastName) user.lastName = lastName;
-      if (nickName) user.nickName = nickName;
-      if (image) user.image = image;
-      if (companyName) user.companyName = companyName;
-      if (provider) user.provider = provider;
-      if (accountType) user.accountType = accountType;
+ if (user) {
+   if (firstName) user.firstName = firstName;
+   if (lastName) user.lastName = lastName;
+   if (nickName) user.nickName = nickName;
+   if (image) user.image = image;
+   if (companyName) user.companyName = companyName;
+   if (provider) user.provider = provider;
+   if (accountType) user.accountType = accountType;
 
-      await user.save();
-      return res
-        .status(200)
-        .json({ success: true, user, message: "User updated" });
-    }
+   await user.save();
 
+   // 🔥 UPDATE POSTS
+   await Post.updateMany(
+     { userId: clerkId },
+     {
+       $set: {
+         "user.firstName": user.firstName,
+         "user.lastName": user.lastName,
+         "user.nickName": user.nickName,
+         "user.image": user.image,
+         "user.accountType": user.accountType,
+       },
+     },
+   );
+
+   // 🔥 SOCKET EMIT (MUST BE BEFORE RETURN)
+   io.emit("userUpdated", {
+     clerkId,
+     firstName: user.firstName,
+     lastName: user.lastName,
+     nickName: user.nickName,
+     image: user.image,
+     accountType: user.accountType,
+   });
+
+   return res.status(200).json({
+     success: true,
+     user,
+     message: "User updated + posts synced",
+   });
+ }
     user = await User.create({
       clerkId,
       email,
