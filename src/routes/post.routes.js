@@ -1,9 +1,14 @@
 const express = require("express");
 const Post = require("../models/post");
 const User = require("../models/user");
+const Notification = require("../models/notification");
 
 module.exports = (io) => {
   const router = express.Router();
+  const {
+    sendPushNotification,
+  } = require("../../services/pushNotification.service");
+
 
   const getRoomName = (levelType, levelValue) =>
     `level-${levelType}-${levelValue || "all"}`;
@@ -62,7 +67,7 @@ module.exports = (io) => {
       });
 
       await newPost.save();
-
+  
       const room = getRoomName(newPost.levelType, newPost.levelValue);
       io.to(room).emit("newPost", newPost);
       io.to(room).emit("postUpdated", newPost);
@@ -225,33 +230,89 @@ module.exports = (io) => {
   });
 
   // ✅ Like / Unlike
-  router.post("/:id/like", async (req, res) => {
-    try {
-      const { userId } = req.body;
-      if (!userId) return res.status(400).json({ message: "Missing userId" });
+router.post("/:id/like", async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ message: "Missing userId" });
+    }
 
-      const post = await Post.findById(req.params.id);
-      if (!post) return res.status(404).json({ message: "Post not found" });
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
 
-      const alreadyLiked = post.likes.includes(userId);
-      if (alreadyLiked) {
-        post.likes = post.likes.filter((id) => id !== userId);
+    const alreadyLiked = post.likes.includes(userId);
+
+    // 🔁 toggle like
+    if (alreadyLiked) {
+      post.likes = post.likes.filter((id) => id !== userId);
+    } else {
+      post.likes.push(userId);
+    }
+
+    await post.save();
+
+    // 🔔 NOTIFICATION (only when liking)
+    if (!alreadyLiked && post.userId !== userId) {
+      const liker = await User.findOne({ clerkId: userId });
+
+      let existing = await Notification.findOne({
+        userId: post.userId,
+        type: "like",
+        postId: post._id,
+      });
+
+      if (existing) {
+        const alreadyIncluded = existing.actors.some(
+          (a) => a.userId === userId,
+        );
+
+        if (!alreadyIncluded) {
+          existing.actors.unshift({
+            userId,
+            name: liker?.firstName,
+            image: liker?.image,
+          });
+
+          existing.count += 1;
+          existing.isRead = false;
+
+          await existing.save();
+        }
       } else {
-        post.likes.push(userId);
+        existing = await Notification.create({
+          userId: post.userId,
+          type: "like",
+          postId: post._id,
+          actors: [
+            {
+              userId,
+              name: liker?.firstName,
+              image: liker?.image,
+            },
+          ],
+          count: 1,
+        });
       }
 
-      await post.save();
-      io.to(getRoomName(post.levelType, post.levelValue)).emit(
-        "updatePost",
-        post,
-      );
-
-      res.status(200).json(post);
-    } catch (err) {
-      console.error("❌ Error liking post:", err);
-      res.status(500).json({ message: "Server error" });
+      // ✅ REAL-TIME NOTIFICATION (YOU WERE MISSING THIS)
+      io.to(post.userId).emit("newNotification", existing);
     }
-  });
+
+    // ✅ ALWAYS update feed
+    io.to(getRoomName(post.levelType, post.levelValue)).emit(
+      "updatePost",
+      post,
+    );
+
+    // ✅ ALWAYS send response
+    res.status(200).json(post);
+  } catch (err) {
+    console.error("❌ Error liking post:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
   //   // ✅ Increment views
   router.post("/:id/view", async (req, res) => {
@@ -338,104 +399,96 @@ module.exports = (io) => {
 
   //   // POST /posts/:id/recast
   //   // ✅ Clean single Recast Route
-  router.post("/:id/recast", async (req, res) => {
-    try {
-      console.log("📩 Recast request body:", req.body);
-      console.log("📩 Recast request params:", req.params);
+router.post("/:id/recast", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId, nickname } = req.body;
 
-      const { id } = req.params;
-      const { userId, nickname } = req.body;
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
+    }
 
-      if (!userId) {
-        return res.status(400).json({ message: "userId is required" });
-      }
+    const post = await Post.findById(id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
 
-      const post = await Post.findById(id);
-      if (!post) {
-        return res.status(404).json({ message: "Post not found" });
-      }
+    if (!Array.isArray(post.recasts)) post.recasts = [];
 
-      // Ensure recasts array exists
-      if (!Array.isArray(post.recasts)) post.recasts = [];
+    const existingIndex = post.recasts.findIndex(
+      (r) => r.userId === userId && !r.quote,
+    );
 
-      // Find existing recast by same user (only matters for toggle)
-      const existingIndex = post.recasts.findIndex(
-        (r) => r.userId === userId && !r.quote,
-      );
+    if (existingIndex >= 0) {
+      post.recasts.splice(existingIndex, 1); // toggle off
+    } else {
+      post.recasts.push({
+        userId,
+        nickname: nickname || "Anonymous",
+        recastedAt: new Date(),
+      });
+    }
 
-      if (existingIndex >= 0) {
-        post.recasts.splice(existingIndex, 1); // toggle off
+    await post.save();
+
+    // 🔔 ONLY when recasting (not undo)
+    if (existingIndex < 0 && post.userId !== userId) {
+      const user = await User.findOne({ clerkId: userId });
+
+      let existing = await Notification.findOne({
+        userId: post.userId,
+        type: "recast",
+        postId: post._id,
+      });
+
+      if (existing) {
+        const alreadyIncluded = existing.actors.some(
+          (a) => a.userId === userId,
+        );
+
+        if (!alreadyIncluded) {
+          existing.actors.unshift({
+            userId,
+            name: user?.firstName,
+            image: user?.image,
+          });
+
+          existing.count += 1;
+          existing.isRead = false;
+
+          await existing.save();
+        }
       } else {
-        post.recasts.push({
-          userId,
-          nickname: nickname || "Anonymous",
-          recastedAt: new Date(),
+        existing = await Notification.create({
+          userId: post.userId,
+          type: "recast",
+          postId: post._id,
+          actors: [
+            {
+              userId,
+              name: user?.firstName,
+              image: user?.image,
+            },
+          ],
+          count: 1,
         });
       }
 
-      await post.save();
-
-      // Emit socket update so others see immediately
-      io.to(getRoomName(post.levelType, post.levelValue)).emit(
-        "updatePost",
-        post,
-      );
-
-      console.log("✅ Recast processed successfully");
-      return res.status(200).json(post);
-    } catch (error) {
-      console.error("🔥 SERVER ERROR during recast:", error);
-      return res
-        .status(500)
-        .json({ message: "Server error", error: error.message });
+      io.to(post.userId).emit("newNotification", existing);
     }
-  });
 
-  // ✅ New simplified recite route (recast with optional quote)
-  router.post("/:id/recite", async (req, res) => {
-    try {
-      const { userId, quoteText, nickname } = req.body;
-      const { id } = req.params;
+    // ✅ always update feed
+    io.to(getRoomName(post.levelType, post.levelValue)).emit(
+      "updatePost",
+      post,
+    );
 
-      if (!userId)
-        return res.status(400).json({ message: "userId is required" });
-
-      const post = await Post.findById(id);
-      if (!post) return res.status(404).json({ message: "Post not found" });
-
-      // ✅ Ensure recasts array exists
-      if (!Array.isArray(post.recites)) post.recites = [];
-
-      // Check if already recasted by this user (toggle if no quote)
-      const existingIndex = post.recites.findIndex(
-        (r) => r.userId === userId && !r.quote,
-      );
-
-      if (existingIndex >= 0 && !quoteText) {
-        post.recites.splice(existingIndex, 1);
-      } else {
-        post.recites.push({
-          userId,
-          nickname: nickname || "Anonymous",
-          quote: quoteText || "",
-          recastedAt: new Date(),
-        });
-      }
-
-      await post.save();
-
-      const io = req.app.get("io");
-      io.emit("postUpdated", post);
-
-      res.status(200).json(post);
-    } catch (err) {
-      console.error("🔥 /recite error:", err);
-      console.error(err.stack); // very useful
-      res
-        .status(500)
-        .json({ message: "Error reciting post", error: err.message });
-    }
-  });
+    return res.status(200).json(post);
+  } catch (error) {
+    console.error("🔥 recast error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
 
   return router;
 };

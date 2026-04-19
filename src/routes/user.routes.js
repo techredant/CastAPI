@@ -3,6 +3,8 @@ require("dotenv").config();
 const express = require("express");
 const User = require("../models/user");
 const Post = require("../models/post");
+const Notification = require("../models/notification");
+
 
 const { StreamChat } = require("stream-chat");
 
@@ -224,56 +226,106 @@ router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
 
     const user = await User.findOne({ clerkId });
     const target = await User.findOne({ clerkId: targetClerkId });
-    
+
     if (!user || !target) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // ✅ CRITICAL FIX
+    // ensure arrays exist
     user.following = user.following || [];
     target.followers = target.followers || [];
 
-    if (!user || !target) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    let isNowFollowing = false;
 
     // ---------------- FOLLOW ----------------
     if (action === "follow") {
-     if (!target.followers) target.followers = [];
+      if (!target.followers.includes(clerkId)) {
+        target.followers.push(clerkId);
+      }
 
-     if (!target.followers.includes(clerkId)) {
-       target.followers.push(clerkId);
-     }
-        if (!user.following) user.following = [];
+      if (!user.following.includes(targetClerkId)) {
+        user.following.push(targetClerkId);
+      }
 
-        if (!user.following.includes(targetClerkId)) {
-          user.following.push(targetClerkId);
-        }
+      isNowFollowing = true;
     }
 
     // ---------------- UNFOLLOW ----------------
     if (action === "unfollow") {
-      target.followers = target.followers.filter(
-        (id) => id !== clerkId
-      );
+      target.followers = target.followers.filter((id) => id !== clerkId);
 
-      user.following = user.following.filter(
-        (id) => id !== targetClerkId
-      );
+      user.following = user.following.filter((id) => id !== targetClerkId);
+
+      isNowFollowing = false;
     }
 
     await target.save();
     await user.save();
 
+    // 🔥 ONLY SEND NOTIFICATION ON FOLLOW (NOT UNFOLLOW)
+   if (isNowFollowing) {
+     const follower = await User.findOne({ clerkId });
+
+     // 🔍 Find existing follow notification
+     let existing = await Notification.findOne({
+       userId: targetClerkId,
+       type: "follow",
+     });
+
+     if (existing) {
+       const alreadyIncluded = existing.actors.some(
+         (a) => a.userId === clerkId,
+       );
+
+       if (!alreadyIncluded) {
+         existing.actors.unshift({
+           userId: clerkId,
+           name: follower?.firstName,
+           image: follower?.image,
+         });
+
+         existing.count += 1;
+         existing.isRead = false;
+
+         await existing.save();
+       }
+     } else {
+       existing = await Notification.create({
+         userId: targetClerkId,
+         type: "follow",
+         actors: [
+           {
+             userId: clerkId,
+             name: follower?.firstName,
+             image: follower?.image,
+           },
+         ],
+         count: 1,
+       });
+     }
+
+     // 🔥 emit to USER ROOM
+     io.to(targetClerkId).emit("newNotification", existing);
+
+     // optional push
+     if (target?.pushToken) {
+       await sendPushNotification(
+         target.pushToken,
+         "New Follower 👤",
+         `${follower?.firstName || "Someone"} followed you`,
+       );
+     }
+   }
+
     return res.json({
       success: true,
-      message: action === "follow" ? "Followed" : "Unfollowed",
+      message: isNowFollowing ? "Followed" : "Unfollowed",
       target,
     });
-   } catch (error) {
-  console.error("Follow error FULL:", error);
-  res.status(500).json({ error: error.message });
-}
+  } catch (error) {
+    console.error("Follow error FULL:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 router.get("/", async (req, res) => {

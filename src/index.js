@@ -25,14 +25,20 @@ app.get("/", (req, res) => {
 io.on("connection", (socket) => {
   console.log("🟢 Client connected:", socket.id);
 
+  // 📌 existing room system (KEEP THIS)
   socket.on("joinRoom", (room) => {
     socket.join(room);
-    console.log(`User ${socket.id} joined room: ${room}`);
+    console.log(`Joined feed room: ${room}`);
+  });
+
+  // 🔥 ADD THIS (FOR NOTIFICATIONS)
+  socket.on("join", (userId) => {
+    socket.join(userId);
+    console.log(`🔔 User joined notification room: ${userId}`);
   });
 
   socket.on("leaveRoom", (room) => {
     socket.leave(room);
-    console.log(`User ${socket.id} left room: ${room}`);
   });
 
   socket.on("disconnect", () => {
