@@ -32,7 +32,7 @@ io.on("connection", (socket) => {
   });
 
   // 🔥 ADD THIS (FOR NOTIFICATIONS)
-  socket.on("join", (userId) => {
+  socket.on("joinRoom", (userId) => {
     socket.join(userId);
     console.log(`🔔 User joined notification room: ${userId}`);
   });
