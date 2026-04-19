@@ -1,8 +1,20 @@
-const { Expo } = require("expo-server-sdk");
-const expo = new Expo();
+let Expo;
+
+async function getExpo() {
+  if (!Expo) {
+    const module = await import("expo-server-sdk");
+    Expo = module.Expo;
+  }
+  return Expo;
+}
 
 async function sendPushNotification(token, title, body) {
-  if (!token || !Expo.isExpoPushToken(token)) return;
+  if (!token) return;
+
+  const ExpoClass = await getExpo();
+  const expo = new ExpoClass();
+
+  if (!ExpoClass.isExpoPushToken(token)) return;
 
   const messages = [
     {
