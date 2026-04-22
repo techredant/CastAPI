@@ -1,3 +1,5 @@
+// models/status.js
+const mongoose = require("mongoose");
 const statusSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true },
@@ -30,3 +32,7 @@ const statusSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+const Status = mongoose.models.Status || mongoose.model("Status", statusSchema);
+
+module.exports = Status;
