@@ -11,6 +11,10 @@ const statusSchema = new mongoose.Schema(
     media: [{ type: String }],
     likes: [{ type: String }],
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
+    backgroundColor: {
+      type: String,
+      default: "#1e293b",
+    },
   },
   { timestamps: true },
 );

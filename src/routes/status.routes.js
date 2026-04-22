@@ -8,7 +8,15 @@ const Comment = require("../models/comment"); // assuming you have this
 ========================= */
 router.post("/", async (req, res) => {
   try {
-    const { userId, lastName, firstName, nickname, caption, media } = req.body;
+    const {
+      userId,
+      lastName,
+      firstName,
+      nickname,
+      caption,
+      media,
+      backgroundColor,
+    } = req.body;
 
     const status = await Status.create({
       userId,
@@ -19,6 +27,7 @@ router.post("/", async (req, res) => {
       media,
       likes: [],
       comments: [],
+      backgroundColor
     });
 
     res.status(201).json(status);
