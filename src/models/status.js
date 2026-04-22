@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const statusSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true },
-    userName: { type: String },
+    lastName: { type: String },
     firstName: { type: String },
     nickname: { type: String },
     caption: { type: String },
