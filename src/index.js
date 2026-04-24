@@ -53,6 +53,8 @@ const productRoutes = require("./routes/product.routes");
 const streamRoutes = require("./routes/stream.routes");
 const statusRoutes = require("./routes/status.routes");
 const comentRoutes = require("./routes/comment.routes");
+const dashboardRoutes = require("./routes/dashboard.routes");
+
 
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
@@ -60,6 +62,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/stream", streamRoutes);
 app.use("/api/status", statusRoutes);
 app.use("/api", comentRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 // app.use("/api/ai", aiRoutes);
 // app.use("/api/upsert-ai", upsertRoutes);
 
