@@ -12,8 +12,9 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@stream-io/chat-ai-sdk": "^0.2.11",
     "cors": "^2.8.6",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.4.2",
     "expo-server-sdk": "^3.15.0",
     "express": "^5.2.1",
     "mongoose": "^9.1.6",

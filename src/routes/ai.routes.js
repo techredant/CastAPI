@@ -1,63 +1,74 @@
 const express = require("express");
-const axios = require("axios");
-const { StreamChat } = require("stream-chat");
 
 const router = express.Router();
 
-const BASE_URL = `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run`;
+router.post("/start-ai-agent", async (req, res) => {
+  const { channel_id, channel_type = "messaging", platform, model } = req.body;
 
-const streamServer = StreamChat.getInstance(
-  process.env.STREAM_API_KEY,
-  process.env.STREAM_API_SECRET,
-);
+  if (!channel_id) {
+    return res.status(400).json({ error: "Missing channel_id" });
+  }
 
-// 🔥 ensure AI user exists once
-streamServer.upsertUser({
-  id: "ai",
-  name: "AI Assistant",
-  image: "https://i.pravatar.cc/150?img=12",
-});
+  const channelId = normalizeChannelId(channel_id);
+  if (!channelId) {
+    return res.status(400).json({ error: "Invalid channel_id" });
+  }
 
-router.post("/chat", async (req, res) => {
   try {
-    const { message, channelId } = req.body;
-
-    if (!message || !channelId) {
-      return res.status(400).json({ error: "message + channelId required" });
-    }
-
-    // 🔹 Call Cloudflare AI
-    const aiResponse = await axios.post(
-      `${BASE_URL}/@cf/meta/llama-3-8b-instruct`,
-      {
-        messages: [{ role: "user", content: message }],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      },
-    );
-
-    const reply = aiResponse.data.result.response;
-
-    // 🔹 Send message into Stream channel
-    const channel = streamServer.channel("messaging", channelId);
-
-    await channel.sendMessage({
-      text: reply,
-      user_id: "ai",
+    await agentManager.startAgent({
+      userId: buildAgentUserId(channelId),
+      channelId,
+      channelType: channel_type,
+      platform,
+      model,
     });
 
-    res.json({ reply });
-  } catch (err) {
-    console.error("AI ERROR:", err.response?.data || err.message);
-
-    res.status(500).json({
-      error: "AI failed",
+    return res.json({ message: "AI Agent started" });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to start AI Agent",
+      reason: error?.message || "Unknown error",
     });
   }
+});
+
+router.post("/stop-ai-agent", async (req, res) => {
+  const channelId = normalizeChannelId(req.body?.channel_id || "");
+
+  if (!channelId) {
+    return res.status(400).json({ error: "Invalid channel_id" });
+  }
+
+  try {
+    await agentManager.stopAgent(buildAgentUserId(channelId));
+    return res.json({ message: "AI Agent stopped" });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to stop AI Agent",
+      reason: error?.message || "Unknown error",
+    });
+  }
+});
+
+router.post("/register-tools", (req, res) => {
+  const { channel_id, tools } = req.body || {};
+
+  if (typeof channel_id !== "string" || !channel_id.trim()) {
+    return res.status(400).json({ error: "Missing or invalid channel_id" });
+  }
+
+  if (!Array.isArray(tools)) {
+    return res.status(400).json({ error: "Missing or invalid tools array" });
+  }
+
+  const channelId = normalizeChannelId(channel_id);
+
+  agentManager.registerClientTools(channelId, tools);
+
+  return res.json({
+    message: "Client tools registered",
+    count: tools.length,
+  });
 });
 
 module.exports = router;

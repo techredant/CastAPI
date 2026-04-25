@@ -49,7 +49,7 @@ io.on("connection", (socket) => {
 const userRoutes = require("./routes/user.routes")(io);
 const postRoutes = require("./routes/post.routes")(io);
 const productRoutes = require("./routes/product.routes");
-// const aiRoutes = require("./routes/ai.routes");
+const aiRoutes = require("./routes/ai.routes");
 const streamRoutes = require("./routes/stream.routes");
 const statusRoutes = require("./routes/status.routes");
 const comentRoutes = require("./routes/comment.routes");
@@ -63,8 +63,8 @@ app.use("/api/stream", streamRoutes);
 app.use("/api/status", statusRoutes);
 app.use("/api", comentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-// app.use("/api/ai", aiRoutes);
-// app.use("/api/upsert-ai", upsertRoutes);
+app.use("/api/ai", aiRoutes);
+
 
 const PORT = 3000;
 
