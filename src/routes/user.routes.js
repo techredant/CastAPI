@@ -328,6 +328,28 @@ router.post("/:clerkId/follow-action/:targetClerkId", async (req, res) => {
   }
 });
 
+router.get("/:clerkId/follow-state", async (req, res) => {
+  try {
+    const { clerkId } = req.params;
+
+    const user = await User.findOne({ clerkId });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    console.log("FOLLOWING FROM DB:", user.following); // 🔥 debug
+
+    res.json({
+      following: user.following || [],
+      followers: user.followers || [],
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get("/", async (req, res) => {
   try {
     const { clerkId, cursor } = req.query;
@@ -376,7 +398,6 @@ router.get("/", async (req, res) => {
       county: u.county,
       constituency: u.constituency,
       ward: u.ward,
-      isFollowing: currentUser?.following?.includes(u.clerkId) || false,
     }));
 
     // ---------------------------
@@ -439,7 +460,6 @@ router.get("/search", async (req, res) => {
        u.nickName ||
        "Unknown User",
      image: u.image,
-     isFollowing: currentUser?.following?.includes(u.clerkId) || false,
    }));
 
     const nextCursor =
