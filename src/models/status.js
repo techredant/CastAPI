@@ -3,24 +3,26 @@ const mongoose = require("mongoose");
 const statusSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true },
-    lastName: { type: String },
-    firstName: { type: String },
-    nickname: { type: String },
 
-    caption: { type: String },
+    firstName: String,
+    lastName: String,
+    nickName: String,
 
-    views: [
-      {
-        userId: String,
-        viewedAt: {
-          type: Date,
-          default: Date.now,
+    caption: String,
+
+    views: {
+      type: [
+        {
+          userId: String,
+          viewedAt: { type: Date, default: Date.now },
         },
-      },
-    ],
+      ],
+      default: [],
+    },
 
-    media: [{ type: String }],
-    likes: [{ type: String }],
+    media: { type: [String], default: [] },
+    likes: { type: [String], default: [] },
+
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
 
     backgroundColor: {
@@ -28,11 +30,10 @@ const statusSchema = new mongoose.Schema(
       default: "#1e293b",
     },
 
-    // ✅ TTL FIELD
     expiresAt: {
       type: Date,
-      default: Date.now,
-      expires: 60 * 60 * 24, // 24 hours in seconds
+      default: () => new Date(Date.now() + 24 * 60 * 60 * 1000),
+      expires: 0,
     },
   },
   { timestamps: true },

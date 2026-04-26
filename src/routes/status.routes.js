@@ -18,6 +18,10 @@ router.post("/", async (req, res) => {
       backgroundColor,
     } = req.body;
 
+        if (!userId) {
+          return res.status(400).json({ message: "userId required" });
+        }
+
     const status = await Status.create({
       userId,
       lastName,
@@ -41,8 +45,12 @@ router.post("/", async (req, res) => {
 ========================= */
 router.get("/", async (req, res) => {
   try {
+    const { page = 1, limit = 10 } = req.query;
+
     const statuses = await Status.find()
       .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .skip((page - 1) * limit)
       .populate("comments");
 
     res.json(statuses);
@@ -52,23 +60,30 @@ router.get("/", async (req, res) => {
 });
 
 router.put("/:id/view", async (req, res) => {
-  const { userId } = req.body;
 
-  const status = await Status.findById(req.params.id);
+  try {
+    const { userId } = req.body;
 
-  if (!status) return res.status(404).json({ message: "Not found" });
+    // ✅ HERE
+    if (!userId) {
+      return res.status(400).json({ message: "userId required" });
+    }
 
-  if (!status.views) status.views = [];
+    const status = await Status.findById(req.params.id);
+    if (!status) return res.status(404).json({ message: "Not found" });
 
-  if (!status.views.includes(userId)) {
-    status.views.push(userId);
+    const alreadyViewed = status.views.some((v) => v.userId === userId);
+
+    if (!alreadyViewed) {
+      status.views.push({ userId });
+    }
+
+    await status.save();
+    res.json(status);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
-
-  await status.save();
-
-  res.json(status);
 });
-
 /* =========================
    📌 GET USER STATUSES
 ========================= */
@@ -91,23 +106,23 @@ router.put("/:id/like", async (req, res) => {
   try {
     const { userId } = req.body;
 
+    // ✅ HERE
+    if (!userId) {
+      return res.status(400).json({ message: "userId required" });
+    }
+
     const status = await Status.findById(req.params.id);
+    if (!status) return res.status(404).json({ message: "Not found" });
 
-    if (!status) {
-      return res.status(404).json({ message: "Status not found" });
-    }
+    const update = status.likes.includes(userId)
+      ? { $pull: { likes: userId } }
+      : { $addToSet: { likes: userId } };
 
-    if (status.likes.includes(userId)) {
-      // unlike
-      status.likes = status.likes.filter((id) => id !== userId);
-    } else {
-      // like
-      status.likes.push(userId);
-    }
+    const updated = await Status.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+    });
 
-    await status.save();
-
-    res.json(status);
+    res.json(updated);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -119,7 +134,10 @@ router.put("/:id/like", async (req, res) => {
 router.post("/:id/comment", async (req, res) => {
   try {
     const { userId, text } = req.body;
-
+    // ✅ HERE
+    if (!userId) {
+      return res.status(400).json({ message: "userId required" });
+    }
     const comment = await Comment.create({
       userId,
       text,
@@ -146,7 +164,10 @@ router.post("/:id/comment", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const { userId } = req.body;
-
+    // ✅ HERE
+    if (!userId) {
+      return res.status(400).json({ message: "userId required" });
+    }
     const status = await Status.findById(req.params.id);
 
     if (!status) {
