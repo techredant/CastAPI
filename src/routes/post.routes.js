@@ -143,7 +143,7 @@ module.exports = (io) => {
         query.levelValue = { $in: levelValues };
       }
 
-      const posts = await Post.find(query).sort({ createdAt: -1 });
+     const posts = await Post.find(query).sort({ createdAt: -1 }).limit(20);
 
       const postsWithCounts = await Promise.all(
         posts.map(async (post) => {

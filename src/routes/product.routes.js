@@ -33,7 +33,7 @@ router.post("/", async (req, res) => {
 // ------------------- Get All Products -------------------
 router.get("/", async (_req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const products = await Product.find().sort({ createdAt: -1 }).limit(20);
     res.json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
