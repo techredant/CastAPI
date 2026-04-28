@@ -72,7 +72,12 @@ router.put("/:id/view", async (req, res) => {
     const status = await Status.findById(req.params.id);
     if (!status) return res.status(404).json({ message: "Not found" });
 
-    const alreadyViewed = status.views.some((v) => v.userId === userId);
+  const alreadyViewed = status.views.some((v) => v.userId === userId);
+
+  // 👇 prevent owner from being counted
+  if (status.userId !== userId && !alreadyViewed) {
+    status.views.push({ userId });
+  }
 
     if (!alreadyViewed) {
       status.views.push({ userId });
