@@ -60,39 +60,30 @@ router.get("/", async (req, res) => {
 });
 
 router.put("/:id/view", async (req, res) => {
-  console.log("🔥 VIEW HIT:", req.params.id, req.body);
 
   try {
     const { userId } = req.body;
 
+    // ✅ HERE
     if (!userId) {
       return res.status(400).json({ message: "userId required" });
     }
 
     const status = await Status.findById(req.params.id);
+    if (!status) return res.status(404).json({ message: "Not found" });
 
-    if (!status) {
-      return res.status(404).json({ message: "Status not found" });
-    }
-
-    // ✅ FIXED comparison
-    const alreadyViewed = status.views.some(
-      (v) => v.userId?.toString() === userId?.toString(),
-    );
+    const alreadyViewed = status.views.some((v) => v.userId === userId);
 
     if (!alreadyViewed) {
       status.views.push({ userId });
     }
 
     await status.save();
-
     res.json(status);
   } catch (err) {
-    console.log("❌ ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 });
-
 /* =========================
    📌 GET USER STATUSES
 ========================= */

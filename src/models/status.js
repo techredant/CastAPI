@@ -10,13 +10,15 @@ const statusSchema = new mongoose.Schema(
 
     caption: String,
 
-    // ✅ IMPORTANT: views schema
-    views: [
-      {
-        userId: { type: String, required: true },
-        viewedAt: { type: Date, default: Date.now },
-      },
-    ],
+    views: {
+      type: [
+        {
+          userId: String,
+          viewedAt: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
+    },
 
     media: { type: [String], default: [] },
     likes: { type: [String], default: [] },
