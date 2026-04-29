@@ -354,7 +354,7 @@ router.get("/", async (req, res) => {
   try {
     const { clerkId, cursor } = req.query;
 
-    const limit = 20;
+    const limit = 5;
 
     // ---------------------------
     // FILTER (NO EXCLUSION OF SELF)

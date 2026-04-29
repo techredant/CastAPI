@@ -24,7 +24,7 @@ router.get("/overview", async (req, res) => {
     ];
 
     // 🔹 USERS BY LEVEL (derived)
-    const users = await User.find();
+    const users = await User.find().sort({ createdAt: -1 }).limit(5);;
 
     const levelCounts = {
       National: 0,

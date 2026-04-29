@@ -43,7 +43,7 @@ const user = await User.findOne({ clerkId: userId });
 router.get("/:postId", async (req, res) => {
   try {
     const { postId } = req.params;
-    const comments = await Comment.find({ postId }).sort({ createdAt: -1 }).limit(20);
+    const comments = await Comment.find({ postId }).sort({ createdAt: -1 }).limit(5);
 
     // Sort replies newest first
     comments.forEach((c) => {
