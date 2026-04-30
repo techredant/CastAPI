@@ -182,7 +182,7 @@ module.exports = (io) => {
       console.log(`🟢 Total posts in DB for clerkId ${id}:`, totalPosts);
 
       if (levelType === "home") {
-        const posts = await Post.find(filter).sort({ createdAt: -1 });
+        const posts = await Post.find(filter).sort({ createdAt: -1 }).limit(5);
         console.log(`🟢 Posts returned for HOME:`, posts.length);
         return res.status(200).json(posts);
       }
