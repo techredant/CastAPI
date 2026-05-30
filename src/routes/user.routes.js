@@ -166,10 +166,10 @@ router.post("/create-or-get-user", async (req, res) => {
 
     // --- Generate tokens ---
     const chatToken = chatServer.createToken(user.clerkId);
-    // Unified Stream Chat/Video JWT (same token endpoint as /api/stream/token).
-    const videoToken = chatToken;
+    const { getPublicAppId } = require("../services/agoraToken.service");
+    const agoraAppId = getPublicAppId();
 
-    res.json({ user, chatToken, videoToken });
+    res.json({ user, chatToken, agoraAppId });
   } catch (err) {
     console.error("Error in create-or-get-user:", err);
     res.status(500).json({ message: "Server error" });

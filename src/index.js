@@ -126,6 +126,21 @@ io.on("connection", (socket) => {
     socket.leave(room);
   });
 
+  socket.on("joinLiveRoom", (callId) => {
+    if (typeof callId !== "string" || !callId.trim()) return;
+    const room = `live:${callId.trim()}`;
+    socket.join(room);
+    socket.data.liveCallId = callId.trim();
+  });
+
+  socket.on("leaveLiveRoom", (callId) => {
+    if (typeof callId !== "string" || !callId.trim()) return;
+    socket.leave(`live:${callId.trim()}`);
+    if (socket.data.liveCallId === callId.trim()) {
+      delete socket.data.liveCallId;
+    }
+  });
+
   socket.on("disconnect", () => {
     const userId = socket.data.presenceUserId;
     if (userId) {
@@ -151,6 +166,7 @@ const dashboardRoutes = require("./routes/dashboard.routes");
 const notificationsRoutesFactory = require("./routes/notifications.routes");
 const verificationRoutes = require("./routes/verification.routes")(io);
 const liveRoutes = require("./routes/live.routes")(io);
+const agoraRoutes = require("./routes/agora.routes")(io);
 const mediaRoutes = require("./routes/media.routes")();
 const adsRoutes = require("./routes/ads.routes")();
 const advertiserRoutes = require("./routes/advertiser.routes")();
@@ -186,6 +202,7 @@ app.use("/api/notification-token", notificationsRoutes);
 app.use("/api/notifications", notificationsRoutes);
 app.use("/api/verification", verificationRoutes);
 app.use("/api/live", liveRoutes);
+app.use("/api/agora", agoraRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/ads", adsRoutes);
 app.use("/api/advertiser", advertiserRoutes);
