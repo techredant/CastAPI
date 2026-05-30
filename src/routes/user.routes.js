@@ -166,7 +166,8 @@ router.post("/create-or-get-user", async (req, res) => {
 
     // --- Generate tokens ---
     const chatToken = chatServer.createToken(user.clerkId);
-    const videoToken = await createVideoToken(user.clerkId);
+    // Unified Stream Chat/Video JWT (same token endpoint as /api/stream/token).
+    const videoToken = chatToken;
 
     res.json({ user, chatToken, videoToken });
   } catch (err) {
