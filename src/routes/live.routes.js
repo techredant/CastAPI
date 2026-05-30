@@ -22,11 +22,15 @@ const LIVE_NOTIFY_COOLDOWN_MS = 10 * 60 * 1000;
 
 const GIFT_AMOUNTS = {
   rose: 10,
+  bouquet: 30,
   heart: 20,
+  hearts: 50,
   star: 50,
   fire: 100,
   rocket: 200,
   lion: 500,
+  crown: 800,
+  car: 1200,
   universe: 1000,
 };
 
