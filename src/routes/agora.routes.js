@@ -37,6 +37,36 @@ function emitToLive(io, callId, event, payload) {
   io.to(liveRoom(callId)).emit(event, payload);
 }
 
+const STALE_RING_MS = 90 * 1000;
+
+async function resolveBlockingCallSession(channelName, callerId) {
+  const existing = await CallSession.findOne({
+    channelName,
+    status: { $in: ["ringing", "active"] },
+  });
+  if (!existing) return null;
+
+  const updatedAt = existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
+  const ageMs = Date.now() - updatedAt;
+  const isStaleRing =
+    existing.status === "ringing" && ageMs > STALE_RING_MS;
+  const sameCallerRetry = existing.callerId === callerId;
+
+  if (isStaleRing || sameCallerRetry) {
+    await CallSession.findOneAndUpdate(
+      { channelName },
+      {
+        status: "ended",
+        endedReason: isStaleRing ? "timeout" : "superseded",
+        endedAt: new Date(),
+      },
+    );
+    return null;
+  }
+
+  return existing;
+}
+
 module.exports = (io) => {
   const router = express.Router();
 
@@ -97,10 +127,7 @@ module.exports = (io) => {
         return res.status(400).json({ ok: false, error: "No recipients" });
       }
 
-      const existing = await CallSession.findOne({
-        channelName,
-        status: { $in: ["ringing", "active"] },
-      });
+      const existing = await resolveBlockingCallSession(channelName, callerId);
       if (existing) {
         return res.status(409).json({ ok: false, error: "Call already in progress" });
       }
