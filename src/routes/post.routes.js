@@ -688,6 +688,37 @@ module.exports = (io) => {
     }
   });
 
+  /** Batch check which post ids are deleted/hidden — for feed polling on serverless. */
+  router.post("/visible", async (req, res) => {
+    try {
+      const rawIds = Array.isArray(req.body?.ids) ? req.body.ids : [];
+      const ids = [
+        ...new Set(
+          rawIds
+            .map((id) => String(id ?? "").trim())
+            .filter((id) => mongoose.Types.ObjectId.isValid(id)),
+        ),
+      ];
+
+      if (!ids.length) {
+        return res.status(200).json({ removedIds: [] });
+      }
+
+      const visible = await Post.find({
+        _id: { $in: ids },
+        isDeleted: { $ne: true },
+      }).select("_id");
+
+      const visibleSet = new Set(visible.map((row) => String(row._id)));
+      const removedIds = ids.filter((id) => !visibleSet.has(id));
+
+      res.status(200).json({ removedIds });
+    } catch (err) {
+      console.error("❌ Error checking post visibility:", err);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
   router.get("/:id", async (req, res) => {
     try {
       const { levelType, levelValue } = req.query;
@@ -914,7 +945,7 @@ module.exports = (io) => {
       post.isDeleted = true;
       await post.save();
 
-      broadcastToFeedRooms(post, "deletePost", post._id);
+      broadcastToFeedRooms(post, "deletePost", String(post._id));
 
       res.status(200).json({ message: "Post hidden", postId: req.params.id });
     } catch (err) {
