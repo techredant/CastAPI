@@ -667,6 +667,27 @@ module.exports = (io) => {
     }
   });
 
+  router.get("/item/:postId", async (req, res) => {
+    try {
+      const { postId } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(postId)) {
+        return res.status(400).json({ message: "Invalid post id" });
+      }
+
+      const post = await Post.findById(postId);
+      if (!post || post.isDeleted) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      const [postWithCounts] = await appendQuoteCounts([post]);
+      res.status(200).json(postWithCounts);
+    } catch (err) {
+      console.error("❌ Error fetching post:", err);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
   router.get("/:id", async (req, res) => {
     try {
       const { levelType, levelValue } = req.query;
