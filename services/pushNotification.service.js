@@ -17,7 +17,7 @@ const DEFAULT_CHANNEL = "new_cast";
 const SOUNDS = {
   default: "notification_sound.wav",
   other: "notification_sound_other.wav",
-  incomingCall: "inComing.wav",
+  incomingCall: "incoming.wav",
 };
 
 function soundForPayload(data = {}) {

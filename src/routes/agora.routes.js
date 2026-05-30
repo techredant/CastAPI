@@ -161,6 +161,7 @@ module.exports = (io) => {
         callMode: callMode === "audio" ? "audio" : "video",
         channelCid: channelCid || null,
         memberIds: [...new Set([callerId, ...memberIds])],
+        rungAt: new Date().toISOString(),
       };
 
       for (const userId of recipients) {
@@ -327,6 +328,54 @@ module.exports = (io) => {
       }).lean();
       return res.json({ ok: true, session });
     } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.get("/calls/incoming/:userId", async (req, res) => {
+    try {
+      const userId = String(req.params.userId || "").trim();
+      if (!userId) {
+        return res.status(400).json({ ok: false, error: "userId required" });
+      }
+
+      const sessions = await CallSession.find({
+        status: "ringing",
+        memberIds: userId,
+        callerId: { $ne: userId },
+        acceptedBy: { $nin: [userId] },
+      })
+        .sort({ updatedAt: -1 })
+        .limit(3)
+        .lean();
+
+      const callerIds = [...new Set(sessions.map((s) => s.callerId).filter(Boolean))];
+      const callers = callerIds.length
+        ? await User.find({ clerkId: { $in: callerIds } })
+            .select("clerkId firstName lastName companyName nickName image")
+            .lean()
+        : [];
+      const callerById = new Map(callers.map((u) => [u.clerkId, u]));
+
+      const rings = sessions.map((session) => {
+        const caller = callerById.get(session.callerId);
+        const callerName =
+          displayNameFromDbUser(caller) || "Someone";
+        return {
+          channelName: session.channelName,
+          callerId: session.callerId,
+          callerName,
+          callerImage: caller?.image || null,
+          callMode: session.callMode === "audio" ? "audio" : "video",
+          channelCid: session.channelCid || null,
+          memberIds: session.memberIds || [],
+          rungAt: session.updatedAt?.toISOString?.() || new Date().toISOString(),
+        };
+      });
+
+      return res.json({ ok: true, rings });
+    } catch (err) {
+      console.error("incoming calls poll error:", err);
       return res.status(500).json({ ok: false, error: err.message });
     }
   });
