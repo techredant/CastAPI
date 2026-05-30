@@ -1,0 +1,34 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "nodemon src/index.js",
+    "worker:embeddings": "node src/workers/embed.worker.js",
+    "worker:moderation": "node src/workers/moderation.worker.js",
+    "verify:mpesa": "node scripts/verify-mpesa.cjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@stream-io/chat-ai-sdk": "^0.2.11",
+    "@upstash/redis": "^1.38.0",
+    "bullmq": "^5.77.6",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "expo-server-sdk": "^3.15.0",
+    "express": "^5.2.1",
+    "firebase-admin": "^13.0.0",
+    "ioredis": "^5.11.0",
+    "mongoose": "^9.1.6",
+    "multer": "^2.1.1",
+    "nodemon": "^3.1.11",
+    "openai": "^6.18.0",
+    "socket.io": "^4.8.3",
+    "stream-chat": "^9.31.0"
+  }
+}
