@@ -524,7 +524,7 @@ module.exports = (io) => {
 
   router.post("/live/viewer/leave", async (req, res) => {
     try {
-      const { callId } = req.body;
+      const { callId, userId, userName } = req.body;
       if (!callId) {
         return res.status(400).json({ ok: false, error: "callId required" });
       }
@@ -537,6 +537,14 @@ module.exports = (io) => {
 
       const count = Math.max(0, updated?.viewerCount ?? 0);
       emitToLive(io, callId, "live:viewer_count", { callId, viewerCount: count });
+
+      if (userId) {
+        emitToLive(io, callId, "live:leave_ping", {
+          callId,
+          userId,
+          userName: userName || "Viewer",
+        });
+      }
 
       return res.json({ ok: true, viewerCount: count });
     } catch (err) {
@@ -608,7 +616,13 @@ module.exports = (io) => {
         "live:chat",
         "live:reaction",
         "live:join_ping",
+        "live:leave_ping",
         "live:speak_request",
+        "live:gift",
+        "live:donation",
+        "live:speak_denied",
+        "live:guest_on_stage",
+        "live:guest_off_stage",
       ];
       const eventName = allowed.includes(type) ? type : null;
       if (!eventName) {
