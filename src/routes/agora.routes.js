@@ -476,6 +476,7 @@ module.exports = (io) => {
       );
 
       const payload = { callId, hostClerkId };
+      await persistLiveEvent(callId, "live:ended", payload);
       io.emit("live:ended", payload);
       emitToLive(io, callId, "live:ended", payload);
 
@@ -488,7 +489,7 @@ module.exports = (io) => {
 
   router.get("/live/active", async (req, res) => {
     try {
-      const { variant, hostClerkId } = req.query;
+      const { variant, hostClerkId, includeEnded } = req.query;
       const filter = { status: "live" };
       if (variant === "market") filter.streamKind = "market";
       else if (variant === "community") filter.streamKind = "community";
@@ -500,18 +501,42 @@ module.exports = (io) => {
         .limit(50)
         .lean();
 
+      let endedSessions = [];
+      if (includeEnded === "true" || includeEnded === "1") {
+        const since = new Date(Date.now() - 2 * 60 * 60 * 1000);
+        const endedFilter = {
+          status: "ended",
+          endedAt: { $gte: since },
+        };
+        if (variant === "market") endedFilter.streamKind = "market";
+        else if (variant === "community") endedFilter.streamKind = "community";
+        else if (variant === "audio") endedFilter.streamKind = "audio";
+
+        endedSessions = await Livestream.find(endedFilter)
+          .sort({ endedAt: -1 })
+          .limit(20)
+          .lean();
+      }
+
+      const mapSession = (s, status) => ({
+        callId: s.callId,
+        hostClerkId: s.hostUserId,
+        variant: s.streamKind,
+        roomTitle: s.title,
+        level: s.county,
+        viewerCount: s.viewerCount || 0,
+        startedAt: s.startedAt,
+        endedAt: s.endedAt,
+        status,
+        custom: {},
+      });
+
       return res.json({
         ok: true,
-        sessions: sessions.map((s) => ({
-          callId: s.callId,
-          hostClerkId: s.hostUserId,
-          variant: s.streamKind,
-          roomTitle: s.title,
-          level: s.county,
-          viewerCount: s.viewerCount || 0,
-          startedAt: s.startedAt,
-          custom: {},
-        })),
+        sessions: [
+          ...sessions.map((s) => mapSession(s, "live")),
+          ...endedSessions.map((s) => mapSession(s, "ended")),
+        ],
       });
     } catch (err) {
       console.error("live active error:", err);
