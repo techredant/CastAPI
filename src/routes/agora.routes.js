@@ -1,6 +1,7 @@
 const express = require("express");
 const CallSession = require("../models/callSession");
 const Livestream = require("../models/livestream");
+const LiveEvent = require("../models/liveEvent");
 const User = require("../models/user");
 const {
   buildRtcToken,
@@ -35,6 +36,32 @@ function emitToUser(io, userId, event, payload) {
 function emitToLive(io, callId, event, payload) {
   if (!io || !callId) return;
   io.to(liveRoom(callId)).emit(event, payload);
+}
+
+function resolveLiveEventId(payload = {}) {
+  return (
+    payload.messageId ||
+    payload.reactionId ||
+    payload.giftEventId ||
+    payload.donationEventId ||
+    `${payload.senderId || payload.userId || "anon"}:${payload.type || "event"}:${Date.now()}:${Math.random().toString(36).slice(2, 9)}`
+  );
+}
+
+async function persistLiveEvent(callId, eventType, payload) {
+  if (!callId || !eventType) return;
+  const flat = { callId, ...payload };
+  const eventId = resolveLiveEventId(flat);
+  try {
+    await LiveEvent.create({
+      callId,
+      eventType,
+      eventId,
+      payload: flat,
+    });
+  } catch (err) {
+    if (err?.code !== 11000) throw err;
+  }
 }
 
 const STALE_RING_MS = 90 * 1000;
@@ -509,11 +536,13 @@ module.exports = (io) => {
       emitToLive(io, callId, "live:viewer_count", { callId, viewerCount: count });
 
       if (userId) {
-        emitToLive(io, callId, "live:join_ping", {
+        const joinPayload = {
           callId,
           userId,
           userName: req.body.userName || "Viewer",
-        });
+        };
+        emitToLive(io, callId, "live:join_ping", joinPayload);
+        await persistLiveEvent(callId, "live:join_ping", joinPayload);
       }
 
       return res.json({ ok: true, viewerCount: count });
@@ -539,11 +568,13 @@ module.exports = (io) => {
       emitToLive(io, callId, "live:viewer_count", { callId, viewerCount: count });
 
       if (userId) {
-        emitToLive(io, callId, "live:leave_ping", {
+        const leavePayload = {
           callId,
           userId,
           userName: userName || "Viewer",
-        });
+        };
+        emitToLive(io, callId, "live:leave_ping", leavePayload);
+        await persistLiveEvent(callId, "live:leave_ping", leavePayload);
       }
 
       return res.json({ ok: true, viewerCount: count });
@@ -630,7 +661,53 @@ module.exports = (io) => {
       }
 
       emitToLive(io, callId, eventName, { callId, ...payload });
+      await persistLiveEvent(callId, eventName, { callId, ...payload });
       return res.json({ ok: true });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  /** Poll live events (Vercel / serverless — no Socket.IO). */
+  router.get("/live/:callId/events", async (req, res) => {
+    try {
+      const { callId } = req.params;
+      if (!callId) {
+        return res.status(400).json({ ok: false, error: "callId required" });
+      }
+
+      const sinceRaw = req.query.since;
+      const sinceMs = Number(sinceRaw);
+      const sinceDate = Number.isFinite(sinceMs) && sinceMs > 0
+        ? new Date(sinceMs)
+        : new Date(Date.now() - 30_000);
+
+      const rows = await LiveEvent.find({
+        callId,
+        createdAt: { $gt: sinceDate },
+      })
+        .sort({ createdAt: 1 })
+        .limit(120)
+        .lean();
+
+      const events = rows.map((row) => ({
+        type: row.eventType,
+        ...(row.payload || {}),
+        eventId: row.eventId,
+        createdAt: row.createdAt ? new Date(row.createdAt).getTime() : Date.now(),
+      }));
+
+      const cursor =
+        events.length > 0
+          ? events[events.length - 1].createdAt
+          : sinceDate.getTime();
+
+      return res.json({
+        ok: true,
+        events,
+        cursor,
+        serverTime: Date.now(),
+      });
     } catch (err) {
       return res.status(500).json({ ok: false, error: err.message });
     }
