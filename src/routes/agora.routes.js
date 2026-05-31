@@ -655,6 +655,16 @@ module.exports = (io) => {
         appId: tokenResult.appId,
       });
 
+      await persistLiveEvent(callId, "live:guest_invite", {
+        callId,
+        hostClerkId,
+        guestUserId,
+        guestName,
+        token: tokenResult.token,
+        uid: tokenResult.uid,
+        appId: tokenResult.appId,
+      });
+
       return res.json({ ok: true });
     } catch (err) {
       return res.status(500).json({ ok: false, error: err.message });
@@ -729,6 +739,8 @@ module.exports = (io) => {
       const sinceDate = Number.isFinite(sinceMs) && sinceMs > 0
         ? new Date(sinceMs)
         : new Date(Date.now() - 30_000);
+      const viewerUserId =
+        typeof req.query.userId === "string" ? req.query.userId.trim() : "";
 
       const rows = await LiveEvent.find({
         callId,
@@ -738,12 +750,18 @@ module.exports = (io) => {
         .limit(120)
         .lean();
 
-      const events = rows.map((row) => ({
-        type: row.eventType,
-        ...(row.payload || {}),
-        eventId: row.eventId,
-        createdAt: row.createdAt ? new Date(row.createdAt).getTime() : Date.now(),
-      }));
+      const events = rows
+        .filter((row) => {
+          if (row.eventType !== "live:guest_invite") return true;
+          if (!viewerUserId) return false;
+          return row.payload?.guestUserId === viewerUserId;
+        })
+        .map((row) => ({
+          type: row.eventType,
+          ...(row.payload || {}),
+          eventId: row.eventId,
+          createdAt: row.createdAt ? new Date(row.createdAt).getTime() : Date.now(),
+        }));
 
       const cursor =
         events.length > 0
