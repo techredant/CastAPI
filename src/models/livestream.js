@@ -4,6 +4,7 @@ const livestreamSchema = new mongoose.Schema(
   {
     callId: { type: String, required: true, unique: true, index: true },
     hostUserId: { type: String, required: true, index: true },
+    hostDisplayName: { type: String, default: "" },
     title: { type: String, default: "" },
     description: { type: String, default: "" },
     streamKind: {

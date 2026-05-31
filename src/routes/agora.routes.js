@@ -17,11 +17,22 @@ const {
 
 function displayNameFromDbUser(user) {
   if (!user) return null;
+  if (user.nickName?.trim()) return user.nickName.trim();
   const full = `${user.firstName || ""} ${user.lastName || ""}`.trim();
   if (full) return full;
   if (user.companyName?.trim()) return user.companyName.trim();
-  if (user.nickName?.trim()) return user.nickName.trim();
   return null;
+}
+
+async function hostNamesByClerkIds(clerkIds) {
+  const unique = [...new Set(clerkIds.filter(Boolean))];
+  if (!unique.length) return new Map();
+  const users = await User.find({ clerkId: { $in: unique } }).lean();
+  const map = new Map();
+  for (const user of users) {
+    map.set(user.clerkId, displayNameFromDbUser(user) || "Member");
+  }
+  return map;
 }
 
 function liveRoom(callId) {
@@ -425,11 +436,15 @@ module.exports = (io) => {
       const streamKind =
         variant === "market" ? "market" : variant === "audio" ? "audio" : "community";
 
+      const hostUser = await User.findOne({ clerkId: hostClerkId }).lean();
+      const hostDisplayName = displayNameFromDbUser(hostUser) || "Member";
+
       await Livestream.findOneAndUpdate(
         { callId },
         {
           callId,
           hostUserId: hostClerkId,
+          hostDisplayName,
           title: roomTitle || custom.title || "Live",
           streamKind,
           status: "live",
@@ -444,6 +459,7 @@ module.exports = (io) => {
       const payload = {
         callId,
         hostClerkId,
+        hostName: hostDisplayName,
         variant,
         roomTitle: roomTitle || custom.title || "Live",
         level: level || custom.level,
@@ -518,9 +534,16 @@ module.exports = (io) => {
           .lean();
       }
 
+      const allRows = [...sessions, ...endedSessions];
+      const hostNames = await hostNamesByClerkIds(allRows.map((s) => s.hostUserId));
+
       const mapSession = (s, status) => ({
         callId: s.callId,
         hostClerkId: s.hostUserId,
+        hostName:
+          s.hostDisplayName?.trim() ||
+          hostNames.get(s.hostUserId) ||
+          "Member",
         variant: s.streamKind,
         roomTitle: s.title,
         level: s.county,
@@ -564,7 +587,7 @@ module.exports = (io) => {
         const joinPayload = {
           callId,
           userId,
-          userName: req.body.userName || "Viewer",
+          userName: (req.body.userName || "").trim() || "Member",
         };
         emitToLive(io, callId, "live:join_ping", joinPayload);
         await persistLiveEvent(callId, "live:join_ping", joinPayload);
@@ -596,7 +619,7 @@ module.exports = (io) => {
         const leavePayload = {
           callId,
           userId,
-          userName: userName || "Viewer",
+          userName: (userName || "").trim() || "Member",
         };
         emitToLive(io, callId, "live:leave_ping", leavePayload);
         await persistLiveEvent(callId, "live:leave_ping", leavePayload);
