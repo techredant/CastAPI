@@ -79,6 +79,36 @@ router.post("/", async (req, res) => {
 ========================= */
 router.get("/", async (req, res) => {
   try {
+    const userLimit = Math.min(
+      Math.max(parseInt(req.query.userLimit, 10) || 0, 0),
+      50,
+    );
+
+    if (userLimit > 0) {
+      const recentUsers = await Status.aggregate([
+        { $sort: { createdAt: -1 } },
+        {
+          $group: {
+            _id: "$userId",
+            latestAt: { $first: "$createdAt" },
+          },
+        },
+        { $sort: { latestAt: -1 } },
+        { $limit: userLimit },
+      ]);
+
+      const userIds = recentUsers.map((r) => r._id).filter(Boolean);
+      if (!userIds.length) {
+        return res.json([]);
+      }
+
+      const statuses = await Status.find({ userId: { $in: userIds } })
+        .sort({ createdAt: -1 })
+        .populate("comments");
+
+      return res.json(await enrichStatuses(statuses));
+    }
+
     const statuses = await Status.find()
       .sort({ createdAt: -1 })
       .populate("comments");
