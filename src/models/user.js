@@ -41,7 +41,10 @@ const userSchema = new mongoose.Schema(
      pendingNickName: { type: String },
      pendingImage: { type: String },
      pendingCompanyName: { type: String },
- 
+     pendingCounty: { type: String },
+     pendingConstituency: { type: String },
+     pendingWard: { type: String },
+
      profileUpdateAt: { type: Date, default: null },
 
     provider: { type: String, default: "clerk" },

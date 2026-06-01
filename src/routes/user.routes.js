@@ -23,7 +23,7 @@ const PROFILE_UPDATE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const normalizeProfileStr = (value) =>
   typeof value === "string" ? value.trim() : "";
 
-const hasScheduledTextChanges = (user) =>
+const hasScheduledProfileChanges = (user) =>
   Boolean(
     (user.pendingFirstName &&
       normalizeProfileStr(user.pendingFirstName) !==
@@ -33,7 +33,15 @@ const hasScheduledTextChanges = (user) =>
           normalizeProfileStr(user.lastName)) ||
       (user.pendingCompanyName &&
         normalizeProfileStr(user.pendingCompanyName) !==
-          normalizeProfileStr(user.companyName)),
+          normalizeProfileStr(user.companyName)) ||
+      (user.pendingCounty &&
+        normalizeProfileStr(user.pendingCounty) !==
+          normalizeProfileStr(user.county)) ||
+      (user.pendingConstituency &&
+        normalizeProfileStr(user.pendingConstituency) !==
+          normalizeProfileStr(user.constituency)) ||
+      (user.pendingWard &&
+        normalizeProfileStr(user.pendingWard) !== normalizeProfileStr(user.ward)),
   );
 
 const applyPendingProfileUpdates = async (user) => {
@@ -44,6 +52,9 @@ const applyPendingProfileUpdates = async (user) => {
     if (user.pendingLastName) user.lastName = user.pendingLastName;
     if (user.pendingNickName) user.nickName = user.pendingNickName;
     if (user.pendingCompanyName) user.companyName = user.pendingCompanyName;
+    if (user.pendingCounty) user.county = user.pendingCounty;
+    if (user.pendingConstituency) user.constituency = user.pendingConstituency;
+    if (user.pendingWard) user.ward = user.pendingWard;
 
     // clear pending
     user.pendingFirstName = undefined;
@@ -51,6 +62,9 @@ const applyPendingProfileUpdates = async (user) => {
     user.pendingNickName = undefined;
     user.pendingImage = undefined;
     user.pendingCompanyName = undefined;
+    user.pendingCounty = undefined;
+    user.pendingConstituency = undefined;
+    user.pendingWard = undefined;
 
     user.profileUpdateAt = null;
 
@@ -75,6 +89,9 @@ router.post("/create-user", async (req, res) => {
       image,
       nickName,
       companyName,
+      county,
+      constituency,
+      ward,
       provider,
       accountType,
     } = req.body;
@@ -91,7 +108,7 @@ router.post("/create-user", async (req, res) => {
         user.profileUpdateAt &&
         new Date(user.profileUpdateAt).getTime() > Date.now();
 
-      const wantsTextChange =
+      const wantsScheduledChange =
         (firstName !== undefined &&
           normalizeProfileStr(firstName) !==
             normalizeProfileStr(user.firstName)) ||
@@ -100,9 +117,16 @@ router.post("/create-user", async (req, res) => {
             normalizeProfileStr(user.lastName)) ||
         (companyName !== undefined &&
           normalizeProfileStr(companyName) !==
-            normalizeProfileStr(user.companyName));
+            normalizeProfileStr(user.companyName)) ||
+        (county !== undefined &&
+          normalizeProfileStr(county) !== normalizeProfileStr(user.county)) ||
+        (constituency !== undefined &&
+          normalizeProfileStr(constituency) !==
+            normalizeProfileStr(user.constituency)) ||
+        (ward !== undefined &&
+          normalizeProfileStr(ward) !== normalizeProfileStr(user.ward));
 
-      if (cooldownActive && wantsTextChange) {
+      if (cooldownActive && wantsScheduledChange) {
         return res.status(429).json({
           success: false,
           message:
@@ -126,10 +150,14 @@ router.post("/create-user", async (req, res) => {
       if (nickName) user.pendingNickName = nickName;
       if (companyName !== undefined)
         user.pendingCompanyName = normalizeProfileStr(companyName);
+      if (county !== undefined) user.pendingCounty = normalizeProfileStr(county);
+      if (constituency !== undefined)
+        user.pendingConstituency = normalizeProfileStr(constituency);
+      if (ward !== undefined) user.pendingWard = normalizeProfileStr(ward);
       if (provider) user.provider = provider;
       if (accountType) user.accountType = accountType;
 
-      if (wantsTextChange) {
+      if (wantsScheduledChange) {
         user.profileUpdateAt = new Date(
           Date.now() + PROFILE_UPDATE_COOLDOWN_MS,
         );
@@ -139,8 +167,8 @@ router.post("/create-user", async (req, res) => {
 
       return res.status(200).json({
         success: true,
-        message: hasScheduledTextChanges(user)
-          ? "Profile name update scheduled"
+        message: hasScheduledProfileChanges(user)
+          ? "Profile update scheduled"
           : "Profile updated",
         profileUpdateAt: user.profileUpdateAt,
         user,
