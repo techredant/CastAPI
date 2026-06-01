@@ -712,6 +712,8 @@ module.exports = (io) => {
         "live:speak_denied",
         "live:guest_on_stage",
         "live:guest_off_stage",
+        "live:guest_muted",
+        "live:guest_unmuted",
       ];
       const eventName = allowed.includes(type) ? type : null;
       if (!eventName) {
