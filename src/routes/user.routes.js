@@ -18,8 +18,23 @@ const chatServer = StreamChat.getInstance(
   process.env.STREAM_API_SECRET,
 );
 
-const PROFILE_UPDATE_COOLDOWN_MS = 60 * 1000;
-// const PROFILE_UPDATE_COOLDOWN_MS = 48 * 60 * 60 * 1000; // production: 48 hours
+const PROFILE_UPDATE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
+const normalizeProfileStr = (value) =>
+  typeof value === "string" ? value.trim() : "";
+
+const hasScheduledTextChanges = (user) =>
+  Boolean(
+    (user.pendingFirstName &&
+      normalizeProfileStr(user.pendingFirstName) !==
+        normalizeProfileStr(user.firstName)) ||
+      (user.pendingLastName &&
+        normalizeProfileStr(user.pendingLastName) !==
+          normalizeProfileStr(user.lastName)) ||
+      (user.pendingCompanyName &&
+        normalizeProfileStr(user.pendingCompanyName) !==
+          normalizeProfileStr(user.companyName)),
+  );
 
 const applyPendingProfileUpdates = async (user) => {
   if (!user?.profileUpdateAt) return user;
@@ -28,7 +43,6 @@ const applyPendingProfileUpdates = async (user) => {
     if (user.pendingFirstName) user.firstName = user.pendingFirstName;
     if (user.pendingLastName) user.lastName = user.pendingLastName;
     if (user.pendingNickName) user.nickName = user.pendingNickName;
-    if (user.pendingImage) user.image = user.pendingImage;
     if (user.pendingCompanyName) user.companyName = user.pendingCompanyName;
 
     // clear pending
@@ -73,10 +87,22 @@ router.post("/create-user", async (req, res) => {
     user = await applyPendingProfileUpdates(user);
     // ---------------- USER EXISTS ----------------
     if (user) {
-      if (
+      const cooldownActive =
         user.profileUpdateAt &&
-        new Date(user.profileUpdateAt).getTime() > Date.now()
-      ) {
+        new Date(user.profileUpdateAt).getTime() > Date.now();
+
+      const wantsTextChange =
+        (firstName !== undefined &&
+          normalizeProfileStr(firstName) !==
+            normalizeProfileStr(user.firstName)) ||
+        (lastName !== undefined &&
+          normalizeProfileStr(lastName) !==
+            normalizeProfileStr(user.lastName)) ||
+        (companyName !== undefined &&
+          normalizeProfileStr(companyName) !==
+            normalizeProfileStr(user.companyName));
+
+      if (cooldownActive && wantsTextChange) {
         return res.status(429).json({
           success: false,
           message:
@@ -86,22 +112,36 @@ router.post("/create-user", async (req, res) => {
         });
       }
 
-      // SAVE PENDING UPDATES (NOT LIVE YET)
-      if (firstName !== undefined) user.pendingFirstName = firstName;
-      if (lastName !== undefined) user.pendingLastName = lastName;
+      // Photo updates go live immediately
+      if (image) {
+        user.image = image;
+        user.pendingImage = undefined;
+      }
+
+      // Name / company updates are scheduled
+      if (firstName !== undefined)
+        user.pendingFirstName = normalizeProfileStr(firstName);
+      if (lastName !== undefined)
+        user.pendingLastName = normalizeProfileStr(lastName);
       if (nickName) user.pendingNickName = nickName;
-      if (image) user.pendingImage = image;
-      if (companyName !== undefined) user.pendingCompanyName = companyName;
+      if (companyName !== undefined)
+        user.pendingCompanyName = normalizeProfileStr(companyName);
       if (provider) user.provider = provider;
       if (accountType) user.accountType = accountType;
 
-      user.profileUpdateAt = new Date(Date.now() + PROFILE_UPDATE_COOLDOWN_MS);
+      if (wantsTextChange) {
+        user.profileUpdateAt = new Date(
+          Date.now() + PROFILE_UPDATE_COOLDOWN_MS,
+        );
+      }
 
       await user.save();
 
       return res.status(200).json({
         success: true,
-        message: `Your profile update will appear after ${PROFILE_UPDATE_COOLDOWN_MS / 1000} seconds`,
+        message: hasScheduledTextChanges(user)
+          ? "Profile name update scheduled"
+          : "Profile updated",
         profileUpdateAt: user.profileUpdateAt,
         user,
       });
