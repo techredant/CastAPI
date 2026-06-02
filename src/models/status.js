@@ -1,8 +1,9 @@
 // models/status.js
 const mongoose = require("mongoose");
+
 const statusSchema = new mongoose.Schema(
   {
-    userId: { type: String, required: true },
+    userId: { type: String, required: true, index: true },
 
     firstName: String,
     companyName: String,
@@ -40,11 +41,15 @@ const statusSchema = new mongoose.Schema(
     expiresAt: {
       type: Date,
       default: () => new Date(Date.now() + 24 * 60 * 60 * 1000),
-      expires: 0,
+      index: true,
     },
   },
   { timestamps: true },
 );
+
+statusSchema.index({ userId: 1, createdAt: 1 });
+statusSchema.index({ createdAt: -1 });
+statusSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const Status = mongoose.models.Status || mongoose.model("Status", statusSchema);
 
