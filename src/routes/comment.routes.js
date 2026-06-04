@@ -119,10 +119,11 @@ router.post(
   moderationGate({ textField: "text", targetType: "comment" }),
   async (req, res) => {
   try {
-    const { userId, text, image } = req.body;
+    const { userId, text, media } = req.body;
     const postId = req.params.id; // get from URL
     const user = await User.findOne({ clerkId: userId });
-    if (!userId || !text) {
+    const mediaList = Array.isArray(media) ? media.filter(Boolean) : [];
+    if (!userId || (!String(text || "").trim() && mediaList.length === 0)) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -130,6 +131,7 @@ router.post(
       postId,
       userId,
       text,
+      media: mediaList,
       user: userSnapshot(user),
       likes: [],
       createdAt: new Date(),

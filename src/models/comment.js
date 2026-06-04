@@ -30,6 +30,7 @@ const commentSchema = new Schema(
     postId: { type: Schema.Types.ObjectId, required: true, ref: "Post" }, // linked to Post
     userId: { type: String, required: true }, // Clerk ID
     text: { type: String, required: true },
+    media: { type: [String], default: [] },
     likes: { type: [String], default: [] }, // array of userIds
     replies: { type: [replySchema], default: [] }, // embedded replies
     user: {
