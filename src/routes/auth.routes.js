@@ -23,6 +23,9 @@ function userToAuthDto(user) {
   const hasName = isPersonal
     ? Boolean(user.firstName?.trim() && user.lastName?.trim())
     : Boolean(user.companyName?.trim());
+  const hasNick = Boolean(user.nickName?.trim());
+  // Profile onboarding requires nickname (set via create-user), not Google prefilled names alone.
+  const hasCompletedName = hasNick && hasName;
   const hasLocation = Boolean(
     user.county?.trim() && user.constituency?.trim() && user.ward?.trim(),
   );
@@ -41,8 +44,10 @@ function userToAuthDto(user) {
     county: user.county || null,
     constituency: user.constituency || null,
     ward: user.ward || null,
-    hasCompletedName: hasName,
-    onboardingComplete: isPersonal ? hasName && hasLocation : hasName,
+    hasCompletedName,
+    onboardingComplete: isPersonal
+      ? hasCompletedName && hasLocation
+      : hasCompletedName,
     displayName: displayName || user.email?.split("@")[0] || "Member",
   };
 }

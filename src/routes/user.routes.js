@@ -7,6 +7,7 @@ const { expireVerificationIfNeeded } = require("../../services/verification.serv
 const { notify } = require("../services/notificationEngine.service");
 
 const { StreamChat } = require("stream-chat");
+const { requireAuth } = require("../middleware/auth.middleware");
 
 module.exports = (io) => {
   const express = require("express");
@@ -244,26 +245,52 @@ router.post("/create-or-get-user", async (req, res) => {
   }
 });
 
+async function resolveUserByAuth(req) {
+  let user = await User.findOne({ clerkId: req.userId });
+  if (user) return user;
+
+  const email = (req.authEmail || "").trim().toLowerCase();
+  if (!email) return null;
+
+  user = await User.findOne({ email });
+  if (user) {
+    user.clerkId = req.userId;
+    await user.save();
+    return user;
+  }
+
+  return null;
+}
+
 // ------------------- UPDATE USER LOCATION -------------------
-router.post("/update-location", async (req, res) => {
+router.post("/update-location", requireAuth, async (req, res) => {
   try {
-    const { clerkId, county, constituency, ward } = req.body;
+    const { county, constituency, ward } = req.body;
 
-    if (!clerkId) {
-      return res.status(400).json({ error: "clerkId required" });
-    }
-
-    const user = await User.findOneAndUpdate(
-      { clerkId },
-      { county, constituency, ward },
-      { new: true },
-    );
+    let user = await resolveUserByAuth(req);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
+      const email = (req.authEmail || "").trim().toLowerCase();
+      if (!email) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found. Complete your profile first.",
+        });
+      }
+      user = await User.create({
+        clerkId: req.userId,
+        email,
+        county,
+        constituency,
+        ward,
+        provider: "google",
+        accountType: "Personal Account",
       });
+    } else {
+      user.county = county;
+      user.constituency = constituency;
+      user.ward = ward;
+      await user.save();
     }
 
     return res.status(200).json({
