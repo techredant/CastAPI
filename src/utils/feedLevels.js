@@ -22,8 +22,10 @@ function findWard(wardName) {
 
 /**
  * Which post levelTypes/levelValues appear in a viewer's feed.
- * Ward posts bubble up to constituency and county; constituency to county;
- * county posts appear on national (home) with #CountyName in the client.
+ * National (home): home + county only.
+ * County: county + constituencies in that county (no wards).
+ * Constituency: constituency + wards in that constituency.
+ * Ward: ward only.
  */
 function getRelatedLevels(levelType, levelValue) {
   switch (levelType) {
@@ -37,12 +39,9 @@ function getRelatedLevels(levelType, levelValue) {
       const county = kenyaData.counties?.find((c) => c.name === levelValue);
       if (!county) return { levelTypes: [], levelValues: [] };
       const constituencyNames = (county.constituencies || []).map((c) => c.name);
-      const wardNames = (county.constituencies || []).flatMap((c) =>
-        (c.wards || []).map((w) => w.name),
-      );
       return {
-        levelTypes: ["county", "constituency", "ward"],
-        levelValues: [county.name, ...constituencyNames, ...wardNames],
+        levelTypes: ["county", "constituency"],
+        levelValues: [county.name, ...constituencyNames],
       };
     }
 

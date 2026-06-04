@@ -46,9 +46,6 @@ function getFeedRoomsForViewer(levelType, levelValue) {
       if (county?.constituencies) {
         for (const constituency of county.constituencies) {
           rooms.add(getRoomName("constituency", constituency.name));
-          for (const ward of constituency.wards || []) {
-            rooms.add(getRoomName("ward", ward.name));
-          }
         }
       }
       break;
@@ -100,10 +97,6 @@ function getBroadcastRoomsForPost(levelType, levelValue) {
     const parents = findParentsForWard(levelValue);
     if (parents?.constituency) {
       rooms.add(getRoomName("constituency", parents.constituency.name));
-    }
-    if (parents?.county) {
-      rooms.add(getRoomName("county", parents.county.name));
-      rooms.add(getRoomName("home", "all"));
     }
   }
 
