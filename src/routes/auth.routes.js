@@ -85,6 +85,10 @@ router.post("/google", async (req, res) => {
     const googleProfile = await verifyGoogleIdToken(idToken);
     const { user, isNewUser } = await findOrCreateUserFromGoogle(googleProfile);
     const dto = userToAuthDto(user);
+    if (isNewUser) {
+      dto.hasCompletedName = false;
+      dto.onboardingComplete = false;
+    }
     const token = signAppToken({ sub: user.clerkId, email: user.email });
 
     return res.status(200).json({
