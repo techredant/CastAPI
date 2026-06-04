@@ -10,6 +10,7 @@ const {
   getRoomName,
   getBroadcastRoomsForPost,
 } = require("../utils/feedRooms");
+const { getRelatedLevels } = require("../utils/feedLevels");
 const {
   isNonPersonalAccount,
   isNewsFeedPost,
@@ -463,53 +464,11 @@ module.exports = (io) => {
         isDeleted: { $ne: true },
       };
 
-      const getRelatedLevels = (levelType, levelValue) => {
-        switch (levelType) {
-          case "home":
-            // Home: show only county-level posts
-            return {
-              levelTypes: ["home", "county"],
-              levelValues: null, // null means all counties
-            };
-
-          case "county":
-            // County: show county + constituencies
-            const county = kenyaData.counties.find(
-              (c) => c.name === levelValue,
-            );
-            if (!county) return { levelTypes: [], levelValues: [] };
-            const constituencyNames = county.constituencies.map((c) => c.name);
-            return {
-              levelTypes: ["county", "constituency"],
-              levelValues: [county.name, ...constituencyNames],
-            };
-
-          case "constituency":
-            // Constituency: show constituency + wards
-            const constituency = kenyaData.counties
-              .flatMap((c) => c.constituencies)
-              .find((cs) => cs.name === levelValue);
-            if (!constituency) return { levelTypes: [], levelValues: [] };
-            const wardNames = constituency.wards.map((w) => w.name);
-            return {
-              levelTypes: ["constituency", "ward"],
-              levelValues: [constituency.name, ...wardNames],
-            };
-
-          case "ward":
-            return { levelTypes: ["ward"], levelValues: [levelValue] };
-
-          default:
-            return { levelTypes: [], levelValues: [] };
-        }
-      };
-
       const { levelTypes, levelValues } = getRelatedLevels(
         levelType,
         levelValue,
       );
 
-      // Build query dynamically
       const query = {
         ...filter,
         levelType: { $in: levelTypes },
@@ -593,47 +552,6 @@ module.exports = (io) => {
       // ✅ Include posts that are not deleted
       const filter = {
         $or: [{ isDeleted: { $exists: false } }, { isDeleted: false }],
-      };
-
-      const getRelatedLevels = (levelType, levelValue) => {
-        switch (levelType) {
-          case "home":
-            // Home: show only county-level posts
-            return {
-              levelTypes: ["home", "county"],
-              levelValues: null, // null means all counties
-            };
-
-          case "county":
-            // County: show county + constituencies
-            const county = kenyaData.counties.find(
-              (c) => c.name === levelValue,
-            );
-            if (!county) return { levelTypes: [], levelValues: [] };
-            const constituencyNames = county.constituencies.map((c) => c.name);
-            return {
-              levelTypes: ["county", "constituency"],
-              levelValues: [county.name, ...constituencyNames],
-            };
-
-          case "constituency":
-            // Constituency: show constituency + wards
-            const constituency = kenyaData.counties
-              .flatMap((c) => c.constituencies)
-              .find((cs) => cs.name === levelValue);
-            if (!constituency) return { levelTypes: [], levelValues: [] };
-            const wardNames = constituency.wards.map((w) => w.name);
-            return {
-              levelTypes: ["constituency", "ward"],
-              levelValues: [constituency.name, ...wardNames],
-            };
-
-          case "ward":
-            return { levelTypes: ["ward"], levelValues: [levelValue] };
-
-          default:
-            return { levelTypes: [], levelValues: [] };
-        }
       };
 
       const { levelTypes, levelValues } = getRelatedLevels(
@@ -741,38 +659,20 @@ module.exports = (io) => {
         return res.status(200).json(postsWithCounts);
       }
 
-      // --- hierarchy logic for county/constituency/ward ---
-      const getRelatedLevels = (levelType, levelValue) => {
-        if (levelType === "county") {
-          const county = kenyaData.counties.find((c) => c.name === levelValue);
-          if (!county) return [];
-          return [
-            county.name,
-            ...county.constituencies.map((c) => c.name),
-            ...county.constituencies.flatMap((c) => c.wards.map((w) => w.name)),
-          ];
-        }
+      const { levelTypes, levelValues } = getRelatedLevels(
+        levelType,
+        levelValue,
+      );
 
-        if (levelType === "constituency") {
-          const constituency = kenyaData.counties
-            .flatMap((c) => c.constituencies)
-            .find((cs) => cs.name === levelValue);
-          if (!constituency) return [];
-          return [constituency.name, ...constituency.wards.map((w) => w.name)];
-        }
-
-        if (levelType === "ward") return [levelValue];
-
-        return [];
-      };
-
-      const relatedLevels = getRelatedLevels(levelType, levelValue);
-
-      const posts = await Post.find({
+      const profileQuery = {
         ...filter,
-        levelValue: { $in: relatedLevels },
-        levelType: { $ne: "home" },
-      }).sort({ createdAt: -1 });
+        levelType: { $in: levelTypes },
+      };
+      if (levelValues?.length) {
+        profileQuery.levelValue = { $in: levelValues };
+      }
+
+      const posts = await Post.find(profileQuery).sort({ createdAt: -1 });
 
       console.log(`🟢 Posts returned for ${levelType}:`, posts.length);
 

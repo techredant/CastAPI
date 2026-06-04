@@ -46,6 +46,9 @@ function getFeedRoomsForViewer(levelType, levelValue) {
       if (county?.constituencies) {
         for (const constituency of county.constituencies) {
           rooms.add(getRoomName("constituency", constituency.name));
+          for (const ward of constituency.wards || []) {
+            rooms.add(getRoomName("ward", ward.name));
+          }
         }
       }
       break;
