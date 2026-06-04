@@ -259,10 +259,23 @@ router.post("/update-location", async (req, res) => {
       { new: true },
     );
 
-    res.json(user);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Location updated",
+    });
   } catch (error) {
     console.error("Error updating location:", error);
-    res.status(500).json({ error: "Server error updating location" });
+    res.status(500).json({
+      success: false,
+      message: "Server error updating location",
+    });
   }
 });
 
