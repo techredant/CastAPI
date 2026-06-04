@@ -1,15 +1,25 @@
 const { OAuth2Client } = require("google-auth-library");
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+/** Web client ID — must match Kotlin GOOGLE_WEB_CLIENT_ID (ID token `aud`). */
+const GOOGLE_WEB_CLIENT_ID = (process.env.GOOGLE_WEB_CLIENT_ID || "").trim();
+/** Legacy name; use the Web OAuth client ID here (not the Android client). */
+const GOOGLE_CLIENT_ID = (process.env.GOOGLE_CLIENT_ID || "").trim();
 
 let client = null;
 
+function getGoogleAudiences() {
+  return [...new Set([GOOGLE_WEB_CLIENT_ID, GOOGLE_CLIENT_ID].filter(Boolean))];
+}
+
 function getClient() {
-  if (!GOOGLE_CLIENT_ID) {
-    throw new Error("GOOGLE_CLIENT_ID is not configured");
+  const audiences = getGoogleAudiences();
+  if (!audiences.length) {
+    throw new Error(
+      "GOOGLE_WEB_CLIENT_ID or GOOGLE_CLIENT_ID is not configured",
+    );
   }
   if (!client) {
-    client = new OAuth2Client(GOOGLE_CLIENT_ID);
+    client = new OAuth2Client(audiences[0]);
   }
   return client;
 }
@@ -22,9 +32,10 @@ async function verifyGoogleIdToken(idToken) {
   if (!idToken || typeof idToken !== "string") {
     throw new Error("Missing Google ID token");
   }
+  const audiences = getGoogleAudiences();
   const ticket = await getClient().verifyIdToken({
     idToken: idToken.trim(),
-    audience: GOOGLE_CLIENT_ID,
+    audience: audiences.length === 1 ? audiences[0] : audiences,
   });
   const payload = ticket.getPayload();
   if (!payload?.sub) {
