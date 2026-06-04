@@ -17,9 +17,18 @@ function splitName(name) {
   };
 }
 
+function isPersonalAccountType(accountType) {
+  const t = (accountType || "").trim();
+  if (!t || t === "Personal Account" || t.toLowerCase() === "personal") {
+    return true;
+  }
+  return !/organization|business|non-profit|public figure|media|e-commerce|entertainment/i.test(
+    t,
+  );
+}
+
 function userToAuthDto(user) {
-  const isPersonal =
-    !user.accountType || user.accountType === "Personal Account";
+  const isPersonal = isPersonalAccountType(user.accountType);
   const hasName = isPersonal
     ? Boolean(user.firstName?.trim() && user.lastName?.trim())
     : Boolean(user.companyName?.trim());

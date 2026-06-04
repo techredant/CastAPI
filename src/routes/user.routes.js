@@ -105,6 +105,41 @@ router.post("/create-user", async (req, res) => {
     user = await applyPendingProfileUpdates(user);
     // ---------------- USER EXISTS ----------------
     if (user) {
+      const isOnboardingProfile = !normalizeProfileStr(user.nickName);
+
+      if (isOnboardingProfile) {
+        if (image) {
+          user.image = image;
+          user.pendingImage = undefined;
+        }
+        if (firstName !== undefined) {
+          user.firstName = normalizeProfileStr(firstName);
+        }
+        if (lastName !== undefined) {
+          user.lastName = normalizeProfileStr(lastName);
+        }
+        if (companyName !== undefined) {
+          user.companyName = normalizeProfileStr(companyName);
+        }
+        if (nickName) user.nickName = nickName;
+        if (accountType) user.accountType = accountType;
+        if (provider) user.provider = provider;
+
+        user.pendingFirstName = undefined;
+        user.pendingLastName = undefined;
+        user.pendingNickName = undefined;
+        user.pendingCompanyName = undefined;
+        user.profileUpdateAt = null;
+
+        await user.save();
+
+        return res.status(200).json({
+          success: true,
+          message: "Profile updated",
+          user,
+        });
+      }
+
       const cooldownActive =
         user.profileUpdateAt &&
         new Date(user.profileUpdateAt).getTime() > Date.now();
