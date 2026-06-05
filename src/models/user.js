@@ -47,7 +47,7 @@ const userSchema = new mongoose.Schema(
 
      profileUpdateAt: { type: Date, default: null },
 
-    provider: { type: String, default: "clerk" },
+    provider: { type: String, default: "google" },
 
     // ✅ Clerk IDs instead of ObjectIds
     followers: {
