@@ -42,7 +42,7 @@ app.get("/", (req, res) => {
 
 const {
   heartbeat: presenceHeartbeat,
-  queryOnlineUserIds,
+  queryPresenceForUserIds,
   allOnlineUserIds,
 } = require("./services/presence.service");
 
@@ -113,12 +113,16 @@ io.on("connection", (socket) => {
 
   socket.on("presence:query", (userIds) => {
     if (!Array.isArray(userIds)) return;
-    void queryOnlineUserIds(userIds)
-      .then((onlineUserIds) => {
-        socket.emit("presence:batch", { onlineUserIds });
+    void queryPresenceForUserIds(userIds)
+      .then((result) => {
+        socket.emit("presence:batch", {
+          onlineUserIds: result.onlineUserIds,
+          requestedIds: userIds,
+          users: result.users,
+        });
       })
       .catch(() => {
-        socket.emit("presence:batch", { onlineUserIds: [] });
+        socket.emit("presence:batch", { onlineUserIds: [], users: [] });
       });
   });
 

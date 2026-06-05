@@ -1,8 +1,7 @@
 const express = require("express");
 const {
   heartbeat,
-  queryOnlineUserIds,
-  ONLINE_WINDOW_MS,
+  queryPresenceForUserIds,
 } = require("../services/presence.service");
 
 module.exports = function presenceRoutes() {
@@ -30,11 +29,8 @@ module.exports = function presenceRoutes() {
       if (!Array.isArray(userIds)) {
         return res.status(400).json({ message: "userIds array required" });
       }
-      const onlineUserIds = await queryOnlineUserIds(userIds);
-      return res.status(200).json({
-        onlineUserIds,
-        windowMs: ONLINE_WINDOW_MS,
-      });
+      const result = await queryPresenceForUserIds(userIds);
+      return res.status(200).json(result);
     } catch (err) {
       console.error("presence query:", err);
       return res.status(500).json({ message: "Server error" });
