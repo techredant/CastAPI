@@ -21,8 +21,10 @@ const chatServer = StreamChat.getInstance(
 
 const PROFILE_UPDATE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
-const normalizeProfileStr = (value) =>
-  typeof value === "string" ? value.trim() : "";
+const {
+  normalizeProfileStr,
+  applyPendingProfileUpdates,
+} = require("../services/userProfile.service");
 
 const hasScheduledProfileChanges = (user) =>
   Boolean(
@@ -44,36 +46,6 @@ const hasScheduledProfileChanges = (user) =>
       (user.pendingWard &&
         normalizeProfileStr(user.pendingWard) !== normalizeProfileStr(user.ward)),
   );
-
-const applyPendingProfileUpdates = async (user) => {
-  if (!user?.profileUpdateAt) return user;
-
-  if (new Date() >= new Date(user.profileUpdateAt)) {
-    if (user.pendingFirstName) user.firstName = user.pendingFirstName;
-    if (user.pendingLastName) user.lastName = user.pendingLastName;
-    if (user.pendingNickName) user.nickName = user.pendingNickName;
-    if (user.pendingCompanyName) user.companyName = user.pendingCompanyName;
-    if (user.pendingCounty) user.county = user.pendingCounty;
-    if (user.pendingConstituency) user.constituency = user.pendingConstituency;
-    if (user.pendingWard) user.ward = user.pendingWard;
-
-    // clear pending
-    user.pendingFirstName = undefined;
-    user.pendingLastName = undefined;
-    user.pendingNickName = undefined;
-    user.pendingImage = undefined;
-    user.pendingCompanyName = undefined;
-    user.pendingCounty = undefined;
-    user.pendingConstituency = undefined;
-    user.pendingWard = undefined;
-
-    user.profileUpdateAt = null;
-
-    await user.save();
-  }
-
-  return user;
-};
 
 // const STREAM_VIDEO_API = "https://video.stream-io-api.com/video/v1";
 // const STREAM_VIDEO_KEY = process.env.STREAM_VIDEO_KEY;
