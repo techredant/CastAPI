@@ -1,3 +1,6 @@
+const Post = require("../models/post");
+const Comment = require("../models/comment");
+
 const normalizeProfileStr = (value) =>
   typeof value === "string" ? value.trim() : "";
 
@@ -9,6 +12,48 @@ function isPersonalAccountType(accountType) {
   return !/organization|business|non-profit|public figure|media|e-commerce|entertainment/i.test(
     t,
   );
+}
+
+/** Push live profile fields onto every post authored or recited by this user. */
+async function syncUserProfileOnPosts(user) {
+  if (!user?.clerkId) return;
+
+  const embed = {
+    "user.clerkId": user.clerkId,
+    "user.firstName": user.firstName || "",
+    "user.lastName": user.lastName || "",
+    "user.nickName": user.nickName || "",
+    "user.companyName": user.companyName || "",
+    "user.image": user.image || "",
+    "user.accountType": user.accountType || "",
+    "user.isVerified": !!user.isVerified,
+    "user.verificationType": user.isVerified ? user.verificationType || "" : "",
+  };
+
+  await Post.updateMany({ userId: user.clerkId }, { $set: embed });
+
+  await Post.updateMany(
+    { reciteUserId: user.clerkId },
+    {
+      $set: {
+        reciteFirstName: user.firstName || "",
+        reciteLastName: user.lastName || "",
+        reciteNickName: user.nickName || "",
+        reciteCompanyName: user.companyName || "",
+        reciteImage: user.image || "",
+      },
+    },
+  );
+
+  const commentUser = {
+    "user.clerkId": user.clerkId,
+    "user.firstName": user.firstName || "",
+    "user.lastName": user.lastName || "",
+    "user.nickName": user.nickName || "",
+    "user.companyName": user.companyName || "",
+    "user.image": user.image || "",
+  };
+  await Comment.updateMany({ userId: user.clerkId }, { $set: commentUser });
 }
 
 async function applyPendingProfileUpdates(user) {
@@ -35,6 +80,7 @@ async function applyPendingProfileUpdates(user) {
     user.profileUpdateAt = null;
 
     await user.save();
+    await syncUserProfileOnPosts(user);
   }
 
   return user;
@@ -79,5 +125,6 @@ module.exports = {
   normalizeProfileStr,
   isPersonalAccountType,
   applyPendingProfileUpdates,
+  syncUserProfileOnPosts,
   userToAuthDto,
 };

@@ -24,6 +24,7 @@ const PROFILE_UPDATE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const {
   normalizeProfileStr,
   applyPendingProfileUpdates,
+  syncUserProfileOnPosts,
 } = require("../services/userProfile.service");
 
 const hasScheduledProfileChanges = (user) =>
@@ -104,6 +105,7 @@ router.post("/create-user", async (req, res) => {
         user.profileUpdateAt = null;
 
         await user.save();
+        await syncUserProfileOnPosts(user);
 
         return res.status(200).json({
           success: true,
@@ -172,6 +174,11 @@ router.post("/create-user", async (req, res) => {
       }
 
       await user.save();
+
+      // Image (and any other immediate fields) should show on existing posts right away.
+      if (image) {
+        await syncUserProfileOnPosts(user);
+      }
 
       return res.status(200).json({
         success: true,
@@ -384,6 +391,8 @@ router.post("/update-image", async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+
+    await syncUserProfileOnPosts(user);
 
     res.json({ success: true, user });
   } catch (err) {
