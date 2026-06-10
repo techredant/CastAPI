@@ -219,7 +219,7 @@ module.exports = (io) => {
       Comment.aggregate([
         {
           $match: {
-            postId: { $in: postIds.map((id) => String(id)) },
+            postId: { $in: postIds },
           },
         },
         {
@@ -244,9 +244,14 @@ module.exports = (io) => {
           ? post.toObject()
           : { ...post };
 
+      const aggregatedComments =
+        commentCountsByPostId.get(String(raw._id)) ?? 0;
+      const storedComments =
+        typeof raw.commentsCount === "number" ? raw.commentsCount : 0;
+
       return {
         ...raw,
-        commentsCount: commentCountsByPostId.get(String(raw._id)) || 0,
+        commentsCount: Math.max(aggregatedComments, storedComments),
         quoteCount: quoteCountsByPostId.get(String(raw._id)) || 0,
       };
     });
