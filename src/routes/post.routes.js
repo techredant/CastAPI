@@ -291,6 +291,9 @@ module.exports = (io) => {
         mentions ?? originalPost?.mentions ?? [],
       );
 
+      const resolvedLevelType = levelType || originalPost?.levelType || "";
+      const resolvedLevelValue = levelValue || originalPost?.levelValue || "";
+
       const newPost = new Post({
         userId,
         caption: caption || originalPost?.caption || "",
@@ -302,8 +305,8 @@ module.exports = (io) => {
         media: media || originalPost?.media || [],
         mentions: resolvedMentions,
         reciteMedia: originalPost?.media || [],
-        levelType: originalPost?.levelType || levelType,
-        levelValue: originalPost?.levelValue || levelValue,
+        levelType: resolvedLevelType,
+        levelValue: resolvedLevelValue,
         quote: quote || originalPost?.quote || null,
         originalPostId: rootOriginalPostId,
         type: type || "post",
