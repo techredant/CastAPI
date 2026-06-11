@@ -69,7 +69,7 @@ const emitCommentEvent = (post, eventName, payload) => {
   }
 };
 
-async function enrichCommentsWithVerification(comments) {
+async function enrichCommentsWithLiveProfiles(comments) {
   const clerkIds = new Set();
   for (const c of comments) {
     if (c.userId) clerkIds.add(c.userId);
@@ -80,24 +80,43 @@ async function enrichCommentsWithVerification(comments) {
   if (!clerkIds.size) return comments;
 
   const users = await User.find({ clerkId: { $in: [...clerkIds] } }).select(
-    "clerkId isVerified verificationType",
+    "clerkId firstName lastName nickName companyName image isVerified verificationType",
   );
   const byClerk = new Map(users.map((u) => [u.clerkId, u]));
 
-  const patchUser = (snapshot, clerkId) => {
+  const applyLiveProfile = (snapshot, clerkId) => {
     const live = byClerk.get(clerkId);
-    if (!snapshot || !live) return;
-    snapshot.isVerified = !!live.isVerified;
-    snapshot.verificationType = live.verificationType || "";
+    if (!live) return snapshot;
+    return {
+      ...(snapshot || {}),
+      clerkId: live.clerkId,
+      firstName: live.firstName || "",
+      lastName: live.lastName || "",
+      nickName: live.nickName || "",
+      companyName: live.companyName || "",
+      image: live.image || "",
+      isVerified: !!live.isVerified,
+      verificationType: live.verificationType || "",
+    };
   };
 
   for (const c of comments) {
-    patchUser(c.user, c.userId);
+    if (c.userId) {
+      c.user = applyLiveProfile(c.user, c.userId);
+    }
     for (const r of c.replies || []) {
-      patchUser(r.user, r.userId);
+      if (r.userId) {
+        r.user = applyLiveProfile(r.user, r.userId);
+      }
     }
   }
   return comments;
+}
+
+async function enrichComment(comment) {
+  if (!comment) return comment;
+  await enrichCommentsWithLiveProfiles([comment]);
+  return comment;
 }
 
 function userSnapshot(user) {
@@ -241,7 +260,7 @@ router.get("/:postId", async (req, res) => {
       c.replies.sort((a, b) => b.createdAt - a.createdAt);
     });
 
-    await enrichCommentsWithVerification(comments);
+    await enrichCommentsWithLiveProfiles(comments);
     res.json(comments);
   } catch (err) {
     console.error("Error fetching comments:", err);
@@ -265,6 +284,7 @@ router.post("/:commentId/like", async (req, res) => {
     }
 
     await comment.save();
+    await enrichComment(comment);
     const updatedPost = await Post.findById(comment.postId);
     emitPostChange(updatedPost);
     emitCommentEvent(updatedPost, "commentUpdated", {
@@ -307,6 +327,7 @@ router.post("/:commentId/replies", async (req, res) => {
     });
 
     await comment.save();
+    await enrichComment(comment);
     const updatedPost = await Post.findById(comment.postId);
     emitPostChange(updatedPost);
     emitCommentEvent(updatedPost, "commentUpdated", {
@@ -366,6 +387,7 @@ router.post("/:commentId/replies/:replyId/like", async (req, res) => {
     }
 
     await comment.save();
+    await enrichComment(comment);
     const updatedPost = await Post.findById(comment.postId);
     emitPostChange(updatedPost);
     emitCommentEvent(updatedPost, "commentUpdated", {

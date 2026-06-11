@@ -54,6 +54,20 @@ async function syncUserProfileOnPosts(user) {
     "user.image": user.image || "",
   };
   await Comment.updateMany({ userId: user.clerkId }, { $set: commentUser });
+
+  const replyUser = {
+    "replies.$[reply].user.clerkId": user.clerkId,
+    "replies.$[reply].user.firstName": user.firstName || "",
+    "replies.$[reply].user.lastName": user.lastName || "",
+    "replies.$[reply].user.nickName": user.nickName || "",
+    "replies.$[reply].user.companyName": user.companyName || "",
+    "replies.$[reply].user.image": user.image || "",
+  };
+  await Comment.updateMany(
+    { "replies.userId": user.clerkId },
+    { $set: replyUser },
+    { arrayFilters: [{ "reply.userId": user.clerkId }] },
+  );
 }
 
 async function applyPendingProfileUpdates(user) {
