@@ -91,11 +91,12 @@ async function createPresignedUploads({ folder, files }) {
         contentType,
         ext: file.ext,
       });
+      // Only sign Content-Type — client must send the same header on PUT.
+      // Cache-Control is set on CloudFront, not required on upload.
       const command = new PutObjectCommand({
         Bucket: bucket,
         Key: key,
         ContentType: contentType,
-        CacheControl: "public, max-age=31536000, immutable",
       });
       const uploadUrl = await getSignedUrl(client, command, {
         expiresIn: PRESIGN_TTL_SECONDS,
