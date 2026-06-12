@@ -1,90 +1,44 @@
 const express = require("express");
-const multer = require("multer");
 const mongoose = require("mongoose");
 const { GridFSBucket, ObjectId } = require("mongodb");
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 },
-});
+const awsS3 = require("../services/awsS3.service");
+const { requireAuth } = require("../middleware/auth.middleware");
 
 function getBucket() {
   return new GridFSBucket(mongoose.connection.db, { bucketName: "media" });
-}
-
-const DEFAULT_FOLDER = "broadcast/uploads";
-
-function sanitizeFolder(value) {
-  if (typeof value !== "string") return DEFAULT_FOLDER;
-  const trimmed = value.trim();
-  if (!trimmed) return DEFAULT_FOLDER;
-  if (!/^[a-zA-Z0-9/_-]{1,120}$/.test(trimmed)) return DEFAULT_FOLDER;
-  return trimmed;
-}
-
-function mediaTypeFromMime(mimeType) {
-  return mimeType?.startsWith("video/") ? "video" : "image";
-}
-
-function extensionForMime(mimeType, type) {
-  if (mimeType === "image/png") return ".png";
-  if (mimeType === "image/webp") return ".webp";
-  if (mimeType === "image/gif") return ".gif";
-  if (mimeType === "video/quicktime") return ".mov";
-  if (mimeType === "video/webm") return ".webm";
-  return type === "video" ? ".mp4" : ".jpg";
-}
-
-function uploadToGridFS(buffer, { filename, contentType, folder }) {
-  const bucket = getBucket();
-  const uploadStream = bucket.openUploadStream(filename, {
-    contentType,
-    metadata: { folder, uploadedAt: new Date() },
-  });
-
-  return new Promise((resolve, reject) => {
-    uploadStream.on("error", reject);
-    uploadStream.on("finish", () => resolve(uploadStream.id));
-    uploadStream.end(buffer);
-  });
 }
 
 module.exports = () => {
   const router = express.Router();
 
   /**
-   * Accept compressed media from web/mobile clients and store in GridFS.
-   * Returns a stable /api/media/<id> URL served by the GET route below.
+   * Pre-signed S3 PUT URLs for direct client upload (images, videos, previews, posters).
+   * Body: { folder?, files: [{ contentType, variant?: "original"|"preview"|"poster", ext? }] }
    */
-  router.post("/upload", upload.single("file"), async (req, res) => {
+  router.post("/presign", requireAuth, async (req, res) => {
     try {
-      if (!req.file?.buffer?.length) {
-        return res.status(400).json({ message: "No file provided" });
+      if (!awsS3.isConfigured()) {
+        return res.status(503).json({
+          message:
+            "AWS S3 is not configured. Set AWS_S3_BUCKET, AWS_REGION, and credentials on the server.",
+        });
       }
-
-      const folder = sanitizeFolder(req.body?.folder ?? req.query?.folder);
-      const contentType = req.file.mimetype || "application/octet-stream";
-      const type = mediaTypeFromMime(contentType);
-      const ext = extensionForMime(contentType, type);
-      const filename =
-        typeof req.file.originalname === "string" && req.file.originalname.trim()
-          ? req.file.originalname.trim()
-          : `upload${ext}`;
-
-      const fileId = await uploadToGridFS(req.file.buffer, {
-        filename,
-        contentType,
-        folder,
-      });
-
-      const url = `/api/media/${fileId.toString()}${ext}`;
-      return res.status(201).json({ url, type, id: fileId.toString() });
+      const { folder, files } = req.body || {};
+      if (!Array.isArray(files) || files.length === 0) {
+        return res.status(400).json({ message: "files array is required" });
+      }
+      if (files.length > 6) {
+        return res.status(400).json({ message: "Too many files in one presign request" });
+      }
+      const payload = await awsS3.createPresignedUploads({ folder, files });
+      return res.status(200).json(payload);
     } catch (err) {
-      console.error("media upload:", err);
-      return res.status(500).json({ message: "Upload failed" });
+      console.error("media presign:", err.message);
+      return res.status(500).json({ message: "Could not create upload URLs" });
     }
   });
 
+  /** Legacy GridFS media — keep serving old /api/media/{id} URLs. */
   router.get("/:filename", async (req, res) => {
     try {
       const raw = req.params.filename;

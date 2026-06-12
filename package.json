@@ -15,10 +15,13 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1067.0",
+    "@aws-sdk/s3-request-presigner": "^3.1067.0",
     "@stream-io/chat-ai-sdk": "^0.2.11",
     "@upstash/redis": "^1.38.0",
     "agora-token": "^2.0.5",
     "bullmq": "^5.77.6",
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "expo-server-sdk": "^3.15.0",
