@@ -588,6 +588,7 @@ module.exports = (io) => {
           callId,
           userId,
           userName: (req.body.userName || "").trim() || "Member",
+          sentAt: Date.now(),
         };
         emitToLive(io, callId, "live:join_ping", joinPayload);
         await persistLiveEvent(callId, "live:join_ping", joinPayload);
