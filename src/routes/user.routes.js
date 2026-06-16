@@ -48,6 +48,15 @@ const hasScheduledProfileChanges = (user) =>
         normalizeProfileStr(user.pendingWard) !== normalizeProfileStr(user.ward)),
   );
 
+/** Live or already-scheduled value — avoids 429 when re-submitting pending fields (e.g. photo-only). */
+const profileFieldBaseline = (user, liveKey, pendingKey) => {
+  const pending = user[pendingKey];
+  if (pending != null && String(pending).trim() !== "") {
+    return normalizeProfileStr(pending);
+  }
+  return normalizeProfileStr(user[liveKey]);
+};
+
 // const STREAM_VIDEO_API = "https://video.stream-io-api.com/video/v1";
 // const STREAM_VIDEO_KEY = process.env.STREAM_VIDEO_KEY;
 // const STREAM_VIDEO_SECRET = process.env.STREAM_VIDEO_SECRET;
@@ -121,20 +130,22 @@ router.post("/create-user", async (req, res) => {
       const wantsScheduledChange =
         (firstName !== undefined &&
           normalizeProfileStr(firstName) !==
-            normalizeProfileStr(user.firstName)) ||
+            profileFieldBaseline(user, "firstName", "pendingFirstName")) ||
         (lastName !== undefined &&
           normalizeProfileStr(lastName) !==
-            normalizeProfileStr(user.lastName)) ||
+            profileFieldBaseline(user, "lastName", "pendingLastName")) ||
         (companyName !== undefined &&
           normalizeProfileStr(companyName) !==
-            normalizeProfileStr(user.companyName)) ||
+            profileFieldBaseline(user, "companyName", "pendingCompanyName")) ||
         (county !== undefined &&
-          normalizeProfileStr(county) !== normalizeProfileStr(user.county)) ||
+          normalizeProfileStr(county) !==
+            profileFieldBaseline(user, "county", "pendingCounty")) ||
         (constituency !== undefined &&
           normalizeProfileStr(constituency) !==
-            normalizeProfileStr(user.constituency)) ||
+            profileFieldBaseline(user, "constituency", "pendingConstituency")) ||
         (ward !== undefined &&
-          normalizeProfileStr(ward) !== normalizeProfileStr(user.ward));
+          normalizeProfileStr(ward) !==
+            profileFieldBaseline(user, "ward", "pendingWard"));
 
       if (cooldownActive && wantsScheduledChange) {
         return res.status(429).json({
