@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const { GridFSBucket, ObjectId } = require("mongodb");
+const multer = require("multer");
 const awsS3 = require("../services/awsS3.service");
 const { requireAuth } = require("../middleware/auth.middleware");
 
@@ -10,6 +11,22 @@ function getBucket() {
 
 module.exports = () => {
   const router = express.Router();
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 35 * 1024 * 1024 },
+  });
+
+  function extForContentType(contentType) {
+    const ct = (contentType || "").toLowerCase();
+    if (ct.includes("image/jpeg")) return "jpg";
+    if (ct.includes("image/png")) return "png";
+    if (ct.includes("image/webp")) return "webp";
+    if (ct.includes("image/gif")) return "gif";
+    if (ct.includes("video/mp4")) return "mp4";
+    if (ct.includes("video/webm")) return "webm";
+    if (ct.includes("video/quicktime")) return "mov";
+    return ct.startsWith("video/") ? "mp4" : "jpg";
+  }
 
   /**
    * Pre-signed S3 PUT URLs for direct client upload (images, videos, previews, posters).
@@ -35,6 +52,47 @@ module.exports = () => {
     } catch (err) {
       console.error("media presign:", err.message);
       return res.status(500).json({ message: "Could not create upload URLs" });
+    }
+  });
+
+  /**
+   * Direct upload into Mongo GridFS (no AWS).
+   * Multipart: file + optional folder. Returns { url: "/api/media/{id}.{ext}" }.
+   */
+  router.post("/upload", requireAuth, upload.single("file"), async (req, res) => {
+    try {
+      const file = req.file;
+      if (!file || !file.buffer) {
+        return res.status(400).json({ message: "file is required" });
+      }
+
+      const folder = (req.body?.folder || "broadcast/uploads").toString();
+      const ext = extForContentType(file.mimetype);
+
+      const _id = new ObjectId();
+      const bucket = getBucket();
+      const stream = bucket.openUploadStream(`${folder}/media.${ext}`, {
+        _id,
+        contentType: file.mimetype,
+        metadata: {
+          folder,
+          originalName: file.originalname,
+        },
+      });
+
+      stream.end(file.buffer);
+
+      stream.on("error", (err) => {
+        console.error("media upload:", err);
+        res.status(500).json({ message: "Upload failed" });
+      });
+
+      stream.on("finish", () => {
+        res.status(200).json({ url: `/api/media/${_id.toString()}.${ext}` });
+      });
+    } catch (err) {
+      console.error("media upload:", err);
+      res.status(500).json({ message: "Upload failed" });
     }
   });
 
