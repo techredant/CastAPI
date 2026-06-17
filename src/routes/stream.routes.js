@@ -101,21 +101,7 @@ async function notifyChatMessageRecipients({
   return { pushSent };
 }
 
-function messagePreview(message) {
-  if (message?.text?.trim()) return message.text.trim();
-
-  const attachments = message?.attachments || [];
-  if (attachments.some((a) => a.type === "call_missed")) return null;
-  if (attachments.some((a) => a.type === "image" || a.image_url))
-    return "Sent a photo";
-  if (attachments.some((a) => a.type === "video")) return "Sent a video";
-  if (attachments.some((a) => a.type === "audio")) return "Sent a voice note";
-  if (attachments.some((a) => a.productId)) return "Sent a product";
-
-  return "New message";
-}
-
-async function handleChatWebhook(body, io) {
+router.post("/token", async (req, res) => {
   if (body.type !== "message.new") return;
 
   const message = body.message;
