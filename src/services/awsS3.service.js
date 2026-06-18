@@ -57,8 +57,8 @@ function extensionForContentType(contentType) {
   return "jpg";
 }
 
-function buildObjectKey(folder, { variant = "original", contentType, ext }) {
-  const id = crypto.randomUUID();
+function buildObjectKey(folder, { uploadId, variant = "original", contentType, ext }) {
+  const id = uploadId || crypto.randomUUID();
   const suffix = ext || extensionForContentType(contentType);
   const safeVariant = ["original", "preview", "poster"].includes(variant)
     ? variant
@@ -82,11 +82,13 @@ async function createPresignedUploads({ folder, files }) {
   const bucket = process.env.AWS_S3_BUCKET.trim();
   const safeFolder = sanitizeFolder(folder);
   const client = getClient();
+  const uploadId = crypto.randomUUID();
 
   const items = await Promise.all(
     (files || []).map(async (file) => {
       const contentType = file.contentType || "application/octet-stream";
       const key = buildObjectKey(safeFolder, {
+        uploadId,
         variant: file.variant,
         contentType,
         ext: file.ext,
