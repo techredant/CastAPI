@@ -71,25 +71,21 @@ module.exports = () => {
 
       const _id = new ObjectId();
       const bucket = getBucket();
-      const stream = bucket.openUploadStream(`${folder}/media.${ext}`, {
-        _id,
-        contentType: file.mimetype,
-        metadata: {
-          folder,
-          originalName: file.originalname,
-        },
+      await new Promise((resolve, reject) => {
+        const stream = bucket.openUploadStream(`${folder}/media.${ext}`, {
+          _id,
+          contentType: file.mimetype,
+          metadata: {
+            folder,
+            originalName: file.originalname,
+          },
+        });
+        stream.on("error", reject);
+        stream.on("finish", resolve);
+        stream.end(file.buffer);
       });
 
-      stream.end(file.buffer);
-
-      stream.on("error", (err) => {
-        console.error("media upload:", err);
-        res.status(500).json({ message: "Upload failed" });
-      });
-
-      stream.on("finish", () => {
-        res.status(200).json({ url: `/api/media/${_id.toString()}.${ext}` });
-      });
+      res.status(200).json({ url: `/api/media/${_id.toString()}.${ext}` });
     } catch (err) {
       console.error("media upload:", err);
       res.status(500).json({ message: "Upload failed" });
