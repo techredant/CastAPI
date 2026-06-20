@@ -56,8 +56,8 @@ module.exports = () => {
   });
 
   /**
-   * Direct upload into Mongo GridFS (no AWS).
-   * Multipart: file + optional folder. Returns { url: "/api/media/{id}.{ext}" }.
+   * Multipart upload — S3 (CloudFront URL) when configured, else GridFS fallback.
+   * Multipart: file + optional folder. Returns { url: CloudFront or "/api/media/{id}.{ext}" }.
    */
   router.post("/upload", requireAuth, upload.single("file"), async (req, res) => {
     try {
@@ -68,13 +68,28 @@ module.exports = () => {
 
       const folder = (req.body?.folder || "broadcast/uploads").toString();
       const ext = extForContentType(file.mimetype);
+      const contentType = file.mimetype || "application/octet-stream";
+
+      if (awsS3.isConfigured()) {
+        try {
+          const uploaded = await awsS3.uploadBuffer({
+            folder,
+            buffer: file.buffer,
+            contentType,
+            ext,
+          });
+          return res.status(200).json({ url: uploaded.publicUrl });
+        } catch (s3Err) {
+          console.error("media S3 server upload:", s3Err.message);
+        }
+      }
 
       const _id = new ObjectId();
       const bucket = getBucket();
       await new Promise((resolve, reject) => {
         const stream = bucket.openUploadStream(`${folder}/media.${ext}`, {
           _id,
-          contentType: file.mimetype,
+          contentType,
           metadata: {
             folder,
             originalName: file.originalname,

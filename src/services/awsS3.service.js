@@ -123,9 +123,43 @@ async function createPresignedUploads({ folder, files }) {
   };
 }
 
+/**
+ * Server-side upload (multipart API) — avoids browser CORS on presigned PUT.
+ * @param {{ folder?: string, buffer: Buffer, contentType: string, ext?: string, variant?: string }} input
+ */
+async function uploadBuffer({ folder, buffer, contentType, ext, variant = "original" }) {
+  if (!isConfigured()) {
+    throw new Error("AWS S3 is not configured");
+  }
+  const bucket = process.env.AWS_S3_BUCKET.trim();
+  const safeFolder = sanitizeFolder(folder);
+  const uploadId = crypto.randomUUID();
+  const key = buildObjectKey(safeFolder, {
+    uploadId,
+    variant,
+    contentType,
+    ext,
+  });
+  const client = getClient();
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType || "application/octet-stream",
+    }),
+  );
+  return {
+    key,
+    publicUrl: publicUrlForKey(key),
+    contentType: contentType || "application/octet-stream",
+  };
+}
+
 module.exports = {
   isConfigured,
   createPresignedUploads,
+  uploadBuffer,
   publicUrlForKey,
   sanitizeFolder,
   cloudFrontBase,
