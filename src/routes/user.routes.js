@@ -25,6 +25,7 @@ const {
   normalizeProfileStr,
   applyPendingProfileUpdates,
   syncUserProfileOnPosts,
+  hasCompletedProfile,
 } = require("../services/userProfile.service");
 
 const hasScheduledProfileChanges = (user) =>
@@ -87,7 +88,7 @@ router.post("/create-user", async (req, res) => {
     user = await applyPendingProfileUpdates(user);
     // ---------------- USER EXISTS ----------------
     if (user) {
-      const isOnboardingProfile = !normalizeProfileStr(user.nickName);
+      const isOnboardingProfile = !hasCompletedProfile(user);
 
       if (isOnboardingProfile) {
         if (image) {

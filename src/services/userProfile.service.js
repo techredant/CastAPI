@@ -71,6 +71,38 @@ async function syncUserProfileOnPosts(user) {
 }
 
 async function applyPendingProfileUpdates(user) {
+  if (!user) return user;
+
+  // Recover profiles that were mistakenly queued during onboarding (e.g. org accounts).
+  if (!hasCompletedProfile(user)) {
+    let changed = false;
+    if (user.pendingFirstName) {
+      user.firstName = user.pendingFirstName;
+      user.pendingFirstName = undefined;
+      changed = true;
+    }
+    if (user.pendingLastName) {
+      user.lastName = user.pendingLastName;
+      user.pendingLastName = undefined;
+      changed = true;
+    }
+    if (user.pendingNickName && isUsableNickName(user.pendingNickName)) {
+      user.nickName = user.pendingNickName;
+      user.pendingNickName = undefined;
+      changed = true;
+    }
+    if (user.pendingCompanyName) {
+      user.companyName = user.pendingCompanyName;
+      user.pendingCompanyName = undefined;
+      changed = true;
+    }
+    if (changed) {
+      user.profileUpdateAt = null;
+      await user.save();
+      await syncUserProfileOnPosts(user);
+    }
+  }
+
   if (!user?.profileUpdateAt) return user;
 
   if (new Date() >= new Date(user.profileUpdateAt)) {
@@ -117,7 +149,7 @@ function isUsableNickName(nick) {
   return value.length > 0 && !value.startsWith("pending_");
 }
 
-function userToAuthDto(user) {
+function hasCompletedProfile(user) {
   const isPersonal = isPersonalAccountType(user.accountType);
   const hasName = isPersonal
     ? Boolean(user.firstName?.trim() && user.lastName?.trim())
@@ -126,9 +158,12 @@ function userToAuthDto(user) {
   const hasLocation = Boolean(
     user.county?.trim() && user.constituency?.trim() && user.ward?.trim(),
   );
-  // New users need nickname + name. Legacy / returning users with location
-  // already set are treated as past the name step (Clerk migration).
-  const hasCompletedName = hasName && (hasNick || hasLocation);
+  return hasName && (hasNick || hasLocation);
+}
+
+function userToAuthDto(user) {
+  const isPersonal = isPersonalAccountType(user.accountType);
+  const hasCompletedName = hasCompletedProfile(user);
   const displayName = isPersonal
     ? [user.firstName, user.lastName].filter(Boolean).join(" ").trim()
     : (user.companyName || "").trim();
@@ -146,7 +181,7 @@ function userToAuthDto(user) {
     ward: user.ward || null,
     hasCompletedName,
     onboardingComplete: isPersonal
-      ? hasCompletedName && hasLocation
+      ? hasCompletedName && Boolean(user.county?.trim() && user.constituency?.trim() && user.ward?.trim())
       : hasCompletedName,
     displayName: displayName || user.email?.split("@")[0] || "Member",
   };
@@ -155,6 +190,8 @@ function userToAuthDto(user) {
 module.exports = {
   normalizeProfileStr,
   isPersonalAccountType,
+  isUsableNickName,
+  hasCompletedProfile,
   applyPendingProfileUpdates,
   syncUserProfileOnPosts,
   userToAuthDto,
