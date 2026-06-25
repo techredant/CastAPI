@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true },
     firstName: { type: String },
     lastName: { type: String },
-    nickName: { type: String, unique: true },
+    nickName: { type: String, unique: true, sparse: true },
     image: { type: String },
     accountType: { type: String },
     companyName: { type: String },

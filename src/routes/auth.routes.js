@@ -6,6 +6,7 @@ const {
   applyPendingProfileUpdates,
   userToAuthDto,
 } = require("../services/userProfile.service");
+const { normalizeEmail } = require("../services/googleAuth.service");
 const { requireAuth } = require("../middleware/auth.middleware");
 
 const router = express.Router();
@@ -21,15 +22,31 @@ function splitName(name) {
   };
 }
 
+async function findUserByEmail(email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return null;
+
+  const exact = await User.findOne({ email: normalized });
+  if (exact) return exact;
+
+  const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return User.findOne({
+    email: { $regex: new RegExp(`^${escaped}$`, "i") },
+  });
+}
+
 async function findOrCreateUserFromGoogle(googleProfile) {
-  const email = googleProfile.email;
+  const email = normalizeEmail(googleProfile.email);
   const googleClerkId = `google_${googleProfile.sub}`;
   let user =
-    (await User.findOne({ email })) ||
+    (await findUserByEmail(email)) ||
     (await User.findOne({ clerkId: googleClerkId }));
   let isNewUser = false;
 
   if (user) {
+    if (normalizeEmail(user.email) !== email) {
+      user.email = email;
+    }
     if (googleProfile.picture && !user.image) {
       user.image = googleProfile.picture;
     }
@@ -76,6 +93,12 @@ router.post("/google", async (req, res) => {
     });
   } catch (err) {
     console.error("POST /api/auth/google error:", err.message);
+    if (err?.code === 11000) {
+      return res.status(409).json({
+        message:
+          "An account with this email already exists. Try signing in with the email you used before.",
+      });
+    }
     const status =
       err.message?.includes("not configured") ||
       err.message?.includes("Missing")
