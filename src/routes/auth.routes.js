@@ -30,47 +30,93 @@ async function findUserByEmail(email) {
   if (exact) return exact;
 
   const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return User.findOne({
+  const byRegex = await User.findOne({
     email: { $regex: new RegExp(`^${escaped}$`, "i") },
   });
+  if (byRegex) return byRegex;
+
+  return User.findOne(
+    { email: normalized },
+    null,
+    { collation: { locale: "en", strength: 2 } },
+  );
+}
+
+async function linkGoogleProfile(user, googleProfile) {
+  const email = normalizeEmail(googleProfile.email);
+  if (normalizeEmail(user.email) !== email) {
+    user.email = email;
+  }
+  if (googleProfile.picture && !user.image) {
+    user.image = googleProfile.picture;
+  }
+  if (googleProfile.given_name && !user.firstName?.trim()) {
+    user.firstName = googleProfile.given_name;
+  }
+  if (googleProfile.family_name && !user.lastName?.trim()) {
+    user.lastName = googleProfile.family_name;
+  }
+  user.provider = "google";
+  await user.save();
+  return user;
+}
+
+async function findExistingGoogleUser(googleProfile) {
+  const email = normalizeEmail(googleProfile.email);
+  const googleClerkId = `google_${googleProfile.sub}`;
+
+  const byClerk = await User.findOne({ clerkId: googleClerkId });
+  if (byClerk) return byClerk;
+
+  return findUserByEmail(email);
 }
 
 async function findOrCreateUserFromGoogle(googleProfile) {
   const email = normalizeEmail(googleProfile.email);
   const googleClerkId = `google_${googleProfile.sub}`;
-  let user =
-    (await findUserByEmail(email)) ||
-    (await User.findOne({ clerkId: googleClerkId }));
-  let isNewUser = false;
 
-  if (user) {
-    if (normalizeEmail(user.email) !== email) {
-      user.email = email;
-    }
-    if (googleProfile.picture && !user.image) {
-      user.image = googleProfile.picture;
-    }
-    user.provider = "google";
-    await user.save();
+  const existing = await findExistingGoogleUser(googleProfile);
+  if (existing) {
+    const user = await linkGoogleProfile(existing, googleProfile);
     return { user, isNewUser: false };
   }
 
-  const clerkId = googleClerkId;
   const fromName = splitName(googleProfile.name);
   const firstName = googleProfile.given_name || fromName.firstName;
   const lastName = googleProfile.family_name || fromName.lastName;
 
-  user = await User.create({
-    clerkId,
+  const payload = {
+    clerkId: googleClerkId,
     email,
     firstName: firstName || undefined,
     lastName: lastName || undefined,
     image: googleProfile.picture || undefined,
     provider: "google",
     accountType: "Personal Account",
-  });
-  isNewUser = true;
-  return { user, isNewUser };
+  };
+
+  try {
+    const user = await User.create(payload);
+    return { user, isNewUser: true };
+  } catch (err) {
+    if (err?.code !== 11000) throw err;
+
+    const recovered = await findExistingGoogleUser(googleProfile);
+    if (recovered) {
+      const user = await linkGoogleProfile(recovered, googleProfile);
+      return { user, isNewUser: false };
+    }
+
+    if (err.keyPattern?.nickName) {
+      const user = await User.create({
+        ...payload,
+        nickName: `pending_${googleProfile.sub}`,
+      });
+      return { user, isNewUser: true };
+    }
+
+    throw err;
+  }
 }
 
 router.post("/google", async (req, res) => {
@@ -78,7 +124,16 @@ router.post("/google", async (req, res) => {
     const { idToken } = req.body || {};
     const googleProfile = await verifyGoogleIdToken(idToken);
     const { user, isNewUser } = await findOrCreateUserFromGoogle(googleProfile);
-    await applyPendingProfileUpdates(user);
+
+    try {
+      await applyPendingProfileUpdates(user);
+    } catch (pendingErr) {
+      console.warn(
+        "applyPendingProfileUpdates on login:",
+        pendingErr?.message || pendingErr,
+      );
+    }
+
     const dto = userToAuthDto(user);
     if (isNewUser) {
       dto.hasCompletedName = false;
@@ -96,7 +151,7 @@ router.post("/google", async (req, res) => {
     if (err?.code === 11000) {
       return res.status(409).json({
         message:
-          "An account with this email already exists. Try signing in with the email you used before.",
+          "This Google account is already linked to another profile. Sign in with the email you used when you first joined, or contact support.",
       });
     }
     const status =

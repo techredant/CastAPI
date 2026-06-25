@@ -74,9 +74,10 @@ async function applyPendingProfileUpdates(user) {
   if (!user?.profileUpdateAt) return user;
 
   if (new Date() >= new Date(user.profileUpdateAt)) {
+    const appliedPendingNick = user.pendingNickName;
     if (user.pendingFirstName) user.firstName = user.pendingFirstName;
     if (user.pendingLastName) user.lastName = user.pendingLastName;
-    if (user.pendingNickName) user.nickName = user.pendingNickName;
+    if (appliedPendingNick) user.nickName = appliedPendingNick;
     if (user.pendingCompanyName) user.companyName = user.pendingCompanyName;
     if (user.pendingCounty) user.county = user.pendingCounty;
     if (user.pendingConstituency) user.constituency = user.pendingConstituency;
@@ -93,11 +94,27 @@ async function applyPendingProfileUpdates(user) {
 
     user.profileUpdateAt = null;
 
-    await user.save();
-    await syncUserProfileOnPosts(user);
+    try {
+      await user.save();
+      await syncUserProfileOnPosts(user);
+    } catch (err) {
+      if (err?.code === 11000 && err.keyPattern?.nickName) {
+        if (appliedPendingNick && user.nickName === appliedPendingNick) {
+          user.nickName = undefined;
+        }
+        await user.save();
+      } else {
+        throw err;
+      }
+    }
   }
 
   return user;
+}
+
+function isUsableNickName(nick) {
+  const value = (nick || "").trim();
+  return value.length > 0 && !value.startsWith("pending_");
 }
 
 function userToAuthDto(user) {
@@ -105,7 +122,7 @@ function userToAuthDto(user) {
   const hasName = isPersonal
     ? Boolean(user.firstName?.trim() && user.lastName?.trim())
     : Boolean(user.companyName?.trim());
-  const hasNick = Boolean(user.nickName?.trim());
+  const hasNick = isUsableNickName(user.nickName);
   const hasLocation = Boolean(
     user.county?.trim() && user.constituency?.trim() && user.ward?.trim(),
   );
